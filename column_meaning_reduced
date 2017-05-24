@@ -1,0 +1,13 @@
+column name             visual inspection       type                meaning
+    
+Run                                             string              The experiment
+decoy                                           boolean             is this a decoy?
+BasePeptide1            eg QIR                  string              sequence of the peptide (can be found in fasta[Start1-5 : Start1-5+LengthPeptide1] (offset of 5))
+PeptideMass1                                    float               mass of one of the peptides?
+Start1                                          integer             start of the peptide in the sequence as aa index? (substract 5 from this to get index in fasta)
+LengthPeptide1                                  integer             number of residues in peptide?
+Linked AminoAcid 1      NaN/letter/'tsda-loop'  string              the probably linked amino acid?
+LinkWindow1             NaN/lots of letters     string              possible other linkage sides?
+ProteinLink1            NaN or float (nat num)  string/float        position of linkage in the sequence (substract 5 from this to get index in fasta)
+Modifications1          NaN or some loop(s)     string              type of modification if it is a modification and not a link?
+match score             can be negative         float               overall score for the match?
