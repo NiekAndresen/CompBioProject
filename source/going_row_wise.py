@@ -14,15 +14,13 @@ pr.init()
 #load native protein
 native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
 with open('/home/niek/HSA_data/1ao6/1ao6A.fasta', 'r') as f:
-    key = ''
+    val = ''
     for line in f:
         if line.startswith('>'):
-            if key:
-                break
-            key, val = line[1:].rstrip().split()[0], ''
-        elif key:
+            continue
+        else:
             val += line.rstrip()
-native_fasta = val
+native_fasta = '_____' + val
 native = pr.pose_from_pdb(native_fname)
 
 
@@ -61,14 +59,21 @@ for chunk in chunks:
             break
         if row['decoy'] == 1:
             continue
-        aa1Idx = int(row['ProteinLink1'])
+        aa1Idx = int(row['ProteinLink1']) #index in the fasta string from above (preceding '_____')
         aa2Idx = int(row['ProteinLink2'])
         aa1Name = row['Linked AminoAcid 1']
         aa2Name = row['Linked AminoAcid 2']
-        print(row['BasePeptide1'], native_fasta[int(row['Start1']-5):int(row['Start1']-5)+int(row['LengthPeptide1'])])
-        print(row['BasePeptide2'], native_fasta[int(row['Start2']-5):int(row['Start2']-5)+int(row['LengthPeptide2'])])
-        print(native_fasta[aa1Idx-5], aa1Name, row['BasePeptide1'])
-        print(native_fasta[aa2Idx-5], aa2Name, row['BasePeptide2'])
+#        res1pos = native.residue(aa1Idx).nbr_atom_xyz()
+        #print(native.total_residue(), len(native.sequence()), len(native_fasta))
+        print(native.residue_type(aa1Idx-4).name1(), native.sequence()[aa1Idx-5], aa1Name, native_fasta[aa1Idx])
+        print(native.residue_type(aa2Idx-4).name1(), native.sequence()[aa2Idx-5], aa2Name, native_fasta[aa2Idx])
+        #above: because pose numbering of residues starts at 1 instead of 0
+#        res2pos = native.residue(aa2Idx).nbr_atom_xyz()
+        
+        #print(row['BasePeptide1'], native_fasta[int(row['Start1']):int(row['Start1'])+int(row['LengthPeptide1'])])
+        #print(row['BasePeptide2'], native_fasta[int(row['Start2']):int(row['Start2'])+int(row['LengthPeptide2'])])
+        #print(native_fasta[aa1Idx], aa1Name, row['BasePeptide1'])
+        #print(native_fasta[aa2Idx], aa2Name, row['BasePeptide2'])
 
 
 # In[32]:
