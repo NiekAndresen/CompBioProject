@@ -25,8 +25,8 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
-chunks = pd.read_csv("/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv", usecols=columns, chunksize=1e5)
-
+##takes dict where for one experiment there is a list of pairs for each scan.
+##calculates the overall fraction of contacts that exist in the crystal as well (<8A)
 def getFoundRatio(dic):
     foundCorrect = 0
     count = 0
@@ -45,12 +45,65 @@ def getFoundRatio(dic):
         return 0.
     return float(foundCorrect) / count
 
-#count number of different experiments
-runs = set()
-for chunk in chunks:
-    for i,row in chunk.iterrows():
-        runs.add(row['Run'])
-nofruns = len(runs)
+with open("/home/niek/HSA_data/Run_identifiers_1_2", 'r') as f:
+    runs = f.readline()[:-1].split(',')
+
+##takes dict where for one experiment there is a list of pairs for each scan.
+##calculates the overall fraction of highest scoring contacts that exist in the crystal as well (<8A)
+def getHighestScoreFoundRatio(dic):
+    foundCorrect = 0
+    count = 0
+    if len(dic) == 0:
+        return 0.
+    foundSomeMatch = False
+    for key in dic:
+        if len(dic[key])==0:
+            continue
+        foundSomeMatch = True
+        count += 1
+        if dic[key][0][1] < 8.:
+            foundCorrect += 1
+    if not foundSomeMatch:
+        return 0.
+    return float(foundCorrect) / count
+    
+##takes dict where for one experiment there is a list of pairs for each scan.
+##calculates the overall fraction of lowest scoring contacts that exist in the crystal as well (<8A)
+def getLowestScoreFoundRatio(dic):
+    foundCorrect = 0
+    count = 0
+    if len(dic) == 0:
+        return 0.
+    foundSomeMatch = False
+    for key in dic:
+        if len(dic[key])==0:
+            continue
+        foundSomeMatch = True
+        count += 1
+        if dic[key][-1][1] < 8.:
+            foundCorrect += 1
+    if not foundSomeMatch:
+        return 0.
+    return float(foundCorrect) / count
+    
+##takes dict where for one experiment there is a list of pairs for each scan.
+##calculates the overall correlation between score and distance
+def getCorrelation(dic):
+    scores = np.array([])
+    distances = np.array([])
+    if len(dic) == 0:
+        return 0.
+    foundSomeMatch = False
+    for key in dic:
+        foundSomeMatch = True
+        if len(dic[key])==0:
+            continue
+        for match in dic[key]:
+            scores = np.append(scores, [match[0]])
+            distances = np.append(distances, [match[1]])
+    if not foundSomeMatch:
+        return 0
+    return np.corrcoef(scores, distances)[0,1]
 
 #top match scores
 contactFoundRatio = {}#for each experiment the percentage of found matches that correspond to a true contact
@@ -77,8 +130,9 @@ for ex in runs:
             realdist = res1pos.distance(res2pos)
             scans[row['Scan']] += [(row['match score'], realdist)]
     for scan in scans.keys():
-        scans[scan] = sorted(scans[scan], key=lambda match: match[0], reverse=True)#descending by score
-    contactFoundRatio[ex] = getFoundRatio(scans)
+        if not all(scans[scan][i][0] >= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
+            scans[scan].sort(key=lambda match: match[0], reverse=True) #descending by score
+    contactFoundRatio[ex] = getCorrelation(scans)
 
 print(contactFoundRatio)
 
