@@ -27,14 +27,12 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
-chunks = pd.read_csv("/home/niek/HSA_data/data_experiment_1_2.csv", usecols=columns, chunksize=1e5)
+chunks = pd.read_csv("/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv", usecols=columns, chunksize=1e5)
 
 for chunk in chunks:
     for i,row in chunk.iterrows():
         if i > 0:
             break
-        if row['decoy'] == 0:
-            continue
         aa1Idx = int(row['ProteinLink1']) #index in the fasta string from above (preceding '_____')
         aa2Idx = int(row['ProteinLink2'])
         aa1Name = row['Linked AminoAcid 1']

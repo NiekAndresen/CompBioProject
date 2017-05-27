@@ -1,0 +1,2 @@
+for experiments 1,2:
+    2% of the matches in all of the data are also true in the crystal (AAs have a distance of <8)
