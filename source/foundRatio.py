@@ -128,11 +128,11 @@ for ex in runs:
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
             realdist = res1pos.distance(res2pos)
-            scans[row['Scan']] += [(row['match score'], realdist)]
+            scans[row['Scan']] += [(row['MatchScore'], realdist)]
     for scan in scans.keys():
         if not all(scans[scan][i][0] >= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
             scans[scan].sort(key=lambda match: match[0], reverse=True) #descending by score
-    contactFoundRatio[ex] = getHighestScoreFoundRatio(scans,100.)
+    contactFoundRatio[ex] = getCorrelation(scans)
 
 print(contactFoundRatio)
 
