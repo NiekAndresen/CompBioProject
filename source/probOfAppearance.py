@@ -26,8 +26,8 @@ columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
 ##takes dict where for one experiment there is a list of pairs for each scan.
-##calculates the overall fraction of contacts that exist in the crystal as well (<thresh)
-def getFoundRatio(dic, thresh):
+##calculates the overall fraction of contacts that exist in the crystal as well (<8A)
+def getFoundRatio(dic):
     foundCorrect = 0
     count = 0
     if len(dic) == 0:
@@ -39,7 +39,7 @@ def getFoundRatio(dic, thresh):
         foundSomeMatch = True
         for match in dic[key]:
             count += 1
-            if match[1] < thresh:
+            if match[1] < 8.:
                 foundCorrect += 1
     if not foundSomeMatch:
         return 0.
@@ -49,8 +49,8 @@ with open("/home/niek/HSA_data/Run_identifiers_1_2", 'r') as f:
     runs = f.readline()[:-1].split(',')
 
 ##takes dict where for one experiment there is a list of pairs for each scan.
-##calculates the overall fraction of highest scoring contacts that exist in the crystal as well (<thresh)
-def getHighestScoreFoundRatio(dic, thresh):
+##calculates the overall fraction of highest scoring contacts that exist in the crystal as well (<8A)
+def getHighestScoreFoundRatio(dic):
     foundCorrect = 0
     count = 0
     if len(dic) == 0:
@@ -61,15 +61,15 @@ def getHighestScoreFoundRatio(dic, thresh):
             continue
         foundSomeMatch = True
         count += 1
-        if dic[key][0][1] < thresh:
+        if dic[key][0][1] < 8.:
             foundCorrect += 1
     if not foundSomeMatch:
         return 0.
     return float(foundCorrect) / count
     
 ##takes dict where for one experiment there is a list of pairs for each scan.
-##calculates the overall fraction of lowest scoring contacts that exist in the crystal as well (<thresh)
-def getLowestScoreFoundRatio(dic, thresh):
+##calculates the overall fraction of lowest scoring contacts that exist in the crystal as well (<8A)
+def getLowestScoreFoundRatio(dic):
     foundCorrect = 0
     count = 0
     if len(dic) == 0:
@@ -80,7 +80,7 @@ def getLowestScoreFoundRatio(dic, thresh):
             continue
         foundSomeMatch = True
         count += 1
-        if dic[key][-1][1] < thresh:
+        if dic[key][-1][1] < 8.:
             foundCorrect += 1
     if not foundSomeMatch:
         return 0.
@@ -105,37 +105,51 @@ def getCorrelation(dic):
         return 0
     return np.corrcoef(scores, distances)[0,1]
 
-#top match scores
-contactFoundRatio = {}#for each experiment the percentage of found matches that correspond to a true contact
-for ex in runs:
-    scans = {}
-    chunks = pd.read_csv("/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv", usecols=columns, chunksize=1e5)
-    for chunk in chunks:
-        for i,row in chunk.iterrows():
-            if row['Run'] != ex:
-                continue
-            if not row['Scan'] in scans.keys():
-                scans[row['Scan']] = []
-            try:
-                aa1Idx = int(row['ProteinLink1']) #index in the fasta string from above (preceding '_____')
-                aa2Idx = int(row['ProteinLink2'])
-            except ValueError:
-                continue
-            if aa1Idx < 5 or aa2Idx < 5: #what AAs are those? I don't have them in the .pdb and .fasta
-                continue
-            if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
-                continue
-            res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-            res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-            realdist = res1pos.distance(res2pos)
-            scans[row['Scan']] += [(row['match score'], realdist)]
-    for scan in scans.keys():
-        if not all(scans[scan][i][0] >= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
-            scans[scan].sort(key=lambda match: match[0], reverse=True) #descending by score
-    contactFoundRatio[ex] = getHighestScoreFoundRatio(scans,100.)
+#probability of having a random pair of residues in contact in the crystal
+count = 0
+success = 0
+for aa1Idx in range(1,native.total_residue()+1):
+    for aa2Idx in range(1, native.total_residue()+1):
+        count += 1
+        res1pos = native.residue(aa1Idx).nbr_atom_xyz()
+        res2pos = native.residue(aa2Idx).nbr_atom_xyz()
+        realdist = res1pos.distance(res2pos)
+        if realdist < 100.:
+            success += 1
+print(float(success)/count)
 
-print(contactFoundRatio)
-
+#probability of having at least one pair of residues in contact if two peptides appear as row
+#count = 0
+#success = 0
+#chunks = pd.read_csv("/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv", usecols=columns, chunksize=1e5)
+#for chunk in chunks:
+#    for i,row in chunk.iterrows():
+#        if(i>1000): break
+#        foundOne = False
+#        indexPairWarValid = False
+#        count += 1
+#        try:
+#            for aa1Idx in range(int(row['Start1'])-4,int(row['Start1'])-4+int(row['LengthPeptide1'])):
+#                if foundOne: break
+#                for aa2Idx in range(int(row['Start2'])-4,int(row['Start2'])-4+int(row['LengthPeptide2'])):
+#                    if aa1Idx < 1 or aa2Idx < 1: #what AAs are those? I don't have them in the .pdb and .fasta
+#                        continue
+#                    if aa1Idx > native.total_residue() or aa2Idx > native.total_residue():
+#                        continue
+#                    indexPairWasValid = True
+#                    if foundOne: break
+#                    res1pos = native.residue(aa1Idx).nbr_atom_xyz()
+#                    res2pos = native.residue(aa2Idx).nbr_atom_xyz()
+#                    realdist = res1pos.distance(res2pos)
+#                    if realdist < 20.:
+#                        success += 1
+#                        foundOne = True
+#        except ValueError:
+#            count -= 1
+#            continue
+#        if not indexPairWasValid:
+#            count -= 1
+#print(float(success)/count)
 
 
 

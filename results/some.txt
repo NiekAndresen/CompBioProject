@@ -1,7 +1,16 @@
 for experiments 1,2:
-    2% of the matches in all of the data are also true in the crystal (AAs have a distance of <8)
-    2% of the TOP SCORING matches in all of the data are also true in the crystal (AAs have a distance of <8)
-    2% of the LOWEST SCORING matches in all of the data are also true in the crystal (AAs have a distance of <8)
+    for threshold of 8:
+        2% of the matches in all of the data are also true in the crystal (AAs have a distance of <threshold) (1.8% for random pair of residues)
+        2% of the TOP SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+        2% of the LOWEST SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+        probability that at least one pair of residues of the two matched peptides is in contact (AAs have distance <threshold): 25%
+    for threshold of 20:
+        20% of the matches in all of the data are also true in the crystal (AAs have a distance of <threshold) (17% for random pair of residues)
+        17% of the TOP SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+        17% of the LOWEST SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+        probability that at least one pair of residues of the two matched peptides is in contact (AAs have distance <threshold): 50%
+    for threshold of 100:
+        100% of all pairs of residues are closer than 100
     correlation between score and distance in crystal: 0.0017
 
 all experiments:
