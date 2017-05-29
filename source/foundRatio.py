@@ -118,7 +118,7 @@ for ex in runs:
                 scans[row['Scan']] = []
             try:
                 aa1Idx = int(row['ProteinLink1']) #index in the fasta string from above (preceding '_____')
-                aa2Idx = int(row['ProteinLink2'])
+                aa2Idx = int(row['ProteinLink2']) #offset of ~27/28? or 5?
             except ValueError:
                 continue
             if aa1Idx < 5 or aa2Idx < 5: #what AAs are those? I don't have them in the .pdb and .fasta
@@ -128,11 +128,11 @@ for ex in runs:
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
             realdist = res1pos.distance(res2pos)
-            scans[row['Scan']] += [(row['MatchScore'], realdist)]
+            scans[row['Scan']] += [(row['match score'], realdist)]
     for scan in scans.keys():
         if not all(scans[scan][i][0] >= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
             scans[scan].sort(key=lambda match: match[0], reverse=True) #descending by score
-    contactFoundRatio[ex] = getCorrelation(scans)
+    contactFoundRatio[ex] = getFoundRatio(scans, 20.)
 
 print(contactFoundRatio)
 

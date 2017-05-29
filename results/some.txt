@@ -1,3 +1,4 @@
+FOR DECOY == 1
 for experiments 1,2:
     for threshold of 8:
         2% of the matches in all of the data are also true in the crystal (AAs have a distance of <threshold) (1.8% for random pair of residues)
@@ -12,6 +13,16 @@ for experiments 1,2:
     for threshold of 100:
         100% of all pairs of residues are closer than 100
     correlation between score and distance in crystal: 0.0017
+
+FOR DECOY == 0
+for experiments 1,2:
+    for threshold of 8:
+        4% of the matches in all of the data are also true in the crystal (AAs have a distance of <threshold) (1.8% for random pair of residues)
+        7% of the TOP SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+        4% of the LOWEST SCORING matches in all of the data are also true in the crystal (AAs have a distance of <threshold)
+    for threshold of 20:
+        21% of the matches in all of the data are also true in the crystal (AAs have a distance of <threshold) (?? for random pair of residues)
+    correlation between score and distance in crystal: -0.2
 
 all experiments:
 	number of rows ~200 million
