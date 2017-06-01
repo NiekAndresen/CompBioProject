@@ -1,1 +1,1 @@
-Run,Scan,decoy,BasePeptide1,PeptideLinkMap1,PeptideMass1,Start1,LengthPeptide1,Linked_AminoAcid_1,ProteinLink1,Modifications1,BasePeptide2,PeptideLinkMap2,PeptideMass2,Start2,LengthPeptide2,Linked_AminoAcid_2,ProteinLink2,Modifications2,match_score
+Run,Scan,decoy,BasePeptide1,PeptideLinkMap1,Start1,LengthPeptide1,Linked_AminoAcid_1,ProteinLink1,Modifications1,BasePeptide2,PeptideLinkMap2,Start2,LengthPeptide2,Linked_AminoAcid_2,ProteinLink2,Modifications2,match_score
