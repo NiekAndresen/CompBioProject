@@ -9,7 +9,6 @@ PeptideLinkMap1                                 string              aas in the r
 Start1                                          integer             start of the peptide in the sequence as aa index? (substract 5 from this to get index in fasta)
 LengthPeptide1                                  integer             number of residues in peptide?
 Linked AminoAcid 1      NaN/letter/'tsda-loop'  string              the probably linked amino acid?
-LinkWindow1             NaN/lots of letters     string              possible other linkage sides?
 ProteinLink1            NaN or float (nat num)  string/float        position of linkage in the sequence (substract 5 from this to get index in fasta)
 Modifications1          NaN or some loop(s)     string              type of modification if it is a modification and not a link?
 match score             can be negative         float               overall score for the match?

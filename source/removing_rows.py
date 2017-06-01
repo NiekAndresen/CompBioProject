@@ -4,7 +4,7 @@ import numpy as np
 
 header_input = '/home/niek/HSA_data/header_reduced'
 input_file = "/home/niek/HSA_data/data_experiment_1_2.csv"
-output_file = "/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv"
+output_file = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
 
 with open(header_input, 'r') as hr:
     header = hr.readline()[:-1] #removed \n at the end of line
@@ -22,7 +22,8 @@ with open(output_file, 'w') as f:
 chunks = pd.read_csv(input_file, usecols=columns, chunksize=1e5)
 
 for chunk in chunks:
-    chunk[chunk['decoy']==0].to_csv(output_file, mode='a', header=False, index=False)
-    #todo remove self loops
+    chunk = chunk[chunk['decoy']==0]
+    chunk = chunk[lambda row: np.logical_and( [str(e).isalpha() and len(str(e))==1 for e in row['Linked AminoAcid 1']], [str(e).isalpha() and len(str(e))==1 for e in row['Linked AminoAcid 2']])]
+    chunk.to_csv(output_file, mode='a', header=False, index=False)
 
 
