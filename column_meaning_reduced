@@ -3,6 +3,7 @@ column name             visual inspection       type                meaning
 Run                                             string              The experiment like 'Belsom_Rappsilber_PurHSA_01'. An experiment contains ~7k unique scans
 Scan                                            integer             in each experiment, a scan contains 1 to hundreds of rows in the csv.
 decoy                                           boolean             is this a decoy? 0 for decoy, 1 for no decoy
+MatchRank                                       interger            rank as explanation (1 is best explanation,...)
 BasePeptide1            eg QIR                  string              sequence of the peptide (can be found in fasta[Start1-5 : Start1-5+LengthPeptide1] (offset of 5))
 PeptideLinkMap1                                 string              aas in the region with numbers. numbers correspond to how likely this is the linkage site.
 Start1                                          integer             start of the peptide in the sequence as aa index? (substract 5 from this to get index in fasta)
