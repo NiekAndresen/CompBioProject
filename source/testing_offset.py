@@ -43,14 +43,17 @@ for chunk in chunks:
                 continue
             print('offset of 5:')
             print(aa1Name, native.residue_type(aa1Idx-4).name1(), native.sequence()[aa1Idx-5], native_fasta[aa1Idx])
-            print('offset of 28:')
-            print(aa1Name, native.residue_type(aa1Idx-27).name1(), native.sequence()[aa1Idx-28], native_fasta[aa1Idx-23])
+            #print('offset of 28:')
+            #print(aa1Name, native.residue_type(aa1Idx-27).name1(), native.sequence()[aa1Idx-28], native_fasta[aa1Idx-23])
             #print(native.residue_type(aa2Idx-4).name1(), native.sequence()[aa2Idx-5], aa2Name, native_fasta[aa2Idx])
             #print("in fasta offset 28:", native_fasta[int(row['ProteinLink1'])-28])
             #print("in fasta offset 5:", native_fasta[int(row['ProteinLink1'])-5])
             #print("in csv:", row['Linked AminoAcid 1'])
         except ValueError:
             continue
+
+#with open('/home/niek/HSA_data/1ao6/1ao6A_seq_from_pdb.fasta', 'w') as f:
+#    f.write(native.sequence() + '\n')
 
 #probability of having at least one pair of residues in contact if two peptides appear as row
 #count = 0

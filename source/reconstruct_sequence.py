@@ -8,7 +8,7 @@ import math
 input_fname = "/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv"
 native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
 fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A.fasta'
-output_fname = "/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta"
+output_fname = "/home/niek/HSA_data/1ao6/1ao6A_reconstructed_no_strip.fasta"
 
 pr.init()
 #load native protein
@@ -44,7 +44,7 @@ for chunk in chunks:
             continue
         
 reconstruction = ''.join(reconstruction)
-reconstruction = reconstruction.strip('_')
+#reconstruction = reconstruction.strip('_')
 with open(output_fname, 'w') as o:
     total_chars_written = 0
     while total_chars_written < len(reconstruction):
