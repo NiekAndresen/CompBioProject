@@ -72,7 +72,7 @@ for ex in runs:
     #print("ratio scans sorted by rank out of not any autovalidated:", sum([x and not y for (x,y) in zip(sortedbyrank, autovalidated)])/(len(scans)-sum(autovalidated))) #~50%
 
 #RESULT: rank 1 means highest score, rank2 means second highest score etc. ranks can appear multiple times
-
+#column 'Autovalidation' and 'validated' are still a mystery
 
 
 
