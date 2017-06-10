@@ -1,7 +1,7 @@
 import pandas as pd
 
 header_fname = '/home/niek/HSA_data/header_reduced'
-input_fname = "/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv"
+input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
 output_fname = "/home/niek/HSA_data/run_identifiers_1_2"
 
 with open(header_fname, 'r') as hr:
