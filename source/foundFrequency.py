@@ -39,13 +39,24 @@ for chunk in chunks:
         site2 = int(row['ProteinLink2'])
         pairkey = (site1, site2)
         if not pairkey in pairdict:
-            pairdict[pairkey] = 0
-        pairdict[pairkey] += 1
+            pairdict[pairkey] = [0, False]
+        pairdict[pairkey][0] += 1
+        if row['MatchRank'] < 5: #this match has been top 5 in SOME scan
+            pairdict[pairkey][1] = True
+        #    pairdict[pairkey] = 0
+        #pairdict[pairkey] += 1
+
+toberemoved = []
+for pair in pairdict: #remove all matches that have never been top 5
+    if pairdict[pair][1] == False:
+        toberemoved += [pair]
+for pair in toberemoved:
+    del pairdict[pair]
 
 maximum = 0
 for pair in pairdict:
-    if pairdict[pair] > maximum:
-        maximum = pairdict[pair]
+    if pairdict[pair][0] > maximum:
+        maximum = pairdict[pair][0]
 print("maximum:")
 print(maximum)
 
@@ -54,7 +65,7 @@ frequencies = np.arange(maximum+1)
 hitChance = np.zeros(maximum+1) #chance to be true in the crystal
 nofPairsWFreq = np.zeros(maximum+1) #how many different pairs have this frequency of occurence
 for pair in pairdict:
-    nofPairsWFreq[pairdict[pair]] += 1
+    nofPairsWFreq[pairdict[pair][0]] += 1
     if pair[0] < 5 or pair[1] < 5: #these AAs are not in the .pdb
         continue
     if pair[0]-4 > native.total_residue() or pair[1]-4 > native.total_residue():
@@ -63,19 +74,19 @@ for pair in pairdict:
     res2pos = native.residue(pair[1]-4).nbr_atom_xyz()
     realdist = res1pos.distance(res2pos)
     hit = realdist > 15 and realdist < 25
-    hitChance[pairdict[pair]] += hit
+    hitChance[pairdict[pair][0]] += hit
 hitChance /= nofPairsWFreq
 
-plt.figure()
-plt.plot(frequencies, nofPairsWFreq)
-plt.xlabel("appearance frequency")
-plt.ylabel("number of different pairs")
-plt.show()
+#plt.figure()
+#plt.bar(frequencies[50:], nofPairsWFreq[50:])
+#plt.xlabel("appearance frequency")
+#plt.ylabel("number of different pairs")
+#plt.show()
 
 antiHitChance = np.zeros(len(hitChance)) #to mark where there's no data
 for i in range(len(hitChance)):
     if nofPairsWFreq[i] < 1:
-        antiHitChance[i] = 1.
+        antiHitChance[i] = .2
 plt.figure()
 plt.bar(frequencies, antiHitChance, color='gray', width=1, edgecolor="none")
 plt.bar(frequencies, hitChance, color='blue', width=1, edgecolor="none")
