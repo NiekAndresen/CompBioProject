@@ -3,13 +3,13 @@ import pandas as pd
 import pyrosetta as pr
 import matplotlib.pyplot as plt
 
-native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
-fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-header_fname = '/home/niek/HSA_data/header_reduced'
-occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
-input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
-output_fname = "/home/niek/HSA_data/results/using_truth"
-fig_fname = "/home/niek/HSA_data/results/true_matches_by_number_of_experiments.png"
+native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
+fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
+occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
+input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+output_fname = "/home/nieck/HSA_data/results/matches_found"
+fig_fname = "/home/nieck/HSA_data/results/true_matches_by_number_of_experiments.png"
 
 pr.init()
 #load native protein
