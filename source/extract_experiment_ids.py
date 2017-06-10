@@ -1,8 +1,8 @@
 import pandas as pd
 
-header_fname = '/home/niek/HSA_data/header_reduced'
-input_fname = "/home/niek/HSA_data/data_experiment_1_2_nodecoys.csv"
-output_fname = "/home/niek/HSA_data/run_identifiers_1_2"
+header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
+input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_3.csv"
+output_fname = "/home/nieck/HSA_data/run_identifiers_everything"
 
 with open(header_fname, 'r') as hr:
     header = hr.readline().rstrip() #removed \n at the end of line

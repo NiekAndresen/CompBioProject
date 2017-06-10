@@ -1,13 +1,14 @@
 import numpy as np
 
-input_fname = "/home/niek/HSA_data/results/tmp"
+input_fname = "/home/nieck/HSA_data/results/everything_statistics"
 
 #get number of lines
-nofLines = -1 #-1 for the header line
+nofLines = 0
 with open(input_fname, 'r') as f:
     for i,l in enumerate(f):
-        if len(l) > 1:
-            nofLines += 1
+        if 'top' in l or len(l) < 2:
+            continue
+        nofLines += 1
 
 ex_names = []
 correlations = np.zeros(nofLines)
@@ -19,13 +20,15 @@ top10 = np.zeros(nofLines)
 top20 = np.zeros(nofLines)
 topall = np.zeros(nofLines)
 
+next = 0
 with open(input_fname, 'r') as f:
-    for i,line in enumerate(f):
+    for line in f:
         if 'top' in line or len(line) < 2:
             continue
         arr = line.strip().split()
         ex_names.append(arr[0])
-        correlations[i], top1[i], top2[i], top3[i], top5[i], top10[i], top20[i], topall[i] = arr[1:]
+        correlations[next], top1[next], top2[next], top3[next], top5[next], top10[next], top20[next], topall[next] = arr[1:]
+        next += 1
 
 print("number of experiments:", len(ex_names))
 
