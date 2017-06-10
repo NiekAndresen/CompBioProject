@@ -33,9 +33,15 @@ print(columns)
 
 with open(occuring_experiments_fname, 'r') as f:
     runs = f.readline()[:-1].split(',')
-    
+
+with open(output_fname, 'w') as out:
+    out.write("number of experiments used and correct matches acquired by them\n")
+
+allMatches = set()
 matches = {}
+idx = 0
 for ex in runs:
+    idx += 1
     matches[ex] = set()
     chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
     for chunk in chunks:
@@ -56,25 +62,25 @@ for ex in runs:
             realdist = res1pos.distance(res2pos)
             if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
                 matches[ex].add((aa1Idx, aa2Idx))
+    allMatches.update(matches[ex])
+    with open(output_fname, 'a') as out:
+        out.write("%3d %4d\n"%(idx,len(allMatches)))
+    print("finished experiment %s (number %d)."%(ex,idx))
 
 #mean number of matches per experiment: 869 (ex 1 2)
 
-
-MatchesFoundWNofExperiments = np.zeros(len(matches))
-newMatches = set(matches[list(matches.keys())[0]])
-with open(output_fname, 'w') as out:
-    out.write("number of experiments used and correct matches acquired by them\n")
-    out.write("%3d %4d\n"%(1,len(newMatches)))
-for i,key in enumerate(matches):
-    if i==0: continue
-    number = len(newMatches)
-    newMatches.update(matches[key])
-    MatchesFoundWNofExperiments[i] = MatchesFoundWNofExperiments[i-1] + len(newMatches) - number
-    with open(output_fname, 'a') as out:
-        out.write("%3d %4d"%(i+1,MatchesFoundWNofExperiments[i]))
+x = []
+y = []
+with open(output_fname, 'r') as result:
+    for line in result:
+        if line.startwith('number'):
+            continue
+        numbers = line.split()
+        x += [numbers[0]]
+        y += [numbers[1]]
 
 plt.figure()
-plt.plot(np.arange(len(matches)), MatchesFoundWNofExperiments)
+plt.plot(x,y)
 plt.xlabel("number of experiments used\n")
 plt.ylabel("number of distinct correct matches found\n")
 plt.savefig(fig_fname)
