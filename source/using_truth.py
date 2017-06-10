@@ -9,6 +9,7 @@ header_fname = '/home/niek/HSA_data/header_reduced'
 occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
 input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
 output_fname = "/home/niek/HSA_data/results/using_truth"
+fig_fname = "/home/niek/HSA_data/results/true_matches_by_number_of_experiments.png"
 
 pr.init()
 #load native protein
@@ -58,14 +59,22 @@ for ex in runs:
 
 #mean number of matches per experiment: 869 (ex 1 2)
 
+
 MatchesFoundWNofExperiments = np.zeros(len(matches))
 newMatches = set(matches[list(matches.keys())[0]])
+with open(output_fname, 'w') as out:
+    out.write("number of experiments used and correct matches acquired by them\n")
+    out.write("%3d %4d\n"%(1,len(newMatches)))
 for i,key in enumerate(matches):
     if i==0: continue
     number = len(newMatches)
     newMatches.update(matches[key])
     MatchesFoundWNofExperiments[i] = MatchesFoundWNofExperiments[i-1] + len(newMatches) - number
+    with open(output_fname, 'a') as out:
+        out.write("%3d %4d"%(i+1,MatchesFoundWNofExperiments[i]))
 
 plt.figure()
 plt.plot(np.arange(len(matches)), MatchesFoundWNofExperiments)
-plt.show()
+plt.xlabel("number of experiments used\n")
+plt.ylabel("number of distinct correct matches found\n")
+plt.savefig(fig_fname)
