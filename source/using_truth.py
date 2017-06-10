@@ -50,8 +50,10 @@ matches = {}
 for ex in runs:
     matches[ex] = set()
 
+chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
 for chunk in chunks:
+    chunkCount += 1
     for i,row in chunk.iterrows():
         try:
             aa1Idx = int(row['ProteinLink1'])
@@ -67,7 +69,7 @@ for chunk in chunks:
         realdist = res1pos.distance(res2pos)
         if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
             matches[row['Run']].add((aa1Idx, aa2Idx))
-    print("Finished a chunk.")
+    print("Finished chunk number %3d."%chunkCount)
 
 idx = 0
 allMatches = set()
