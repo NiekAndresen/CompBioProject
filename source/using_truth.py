@@ -11,6 +11,15 @@ input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
 output_fname = "/home/nieck/HSA_data/results/matches_found"
 fig_fname = "/home/nieck/HSA_data/results/true_matches_by_number_of_experiments.png"
 
+#native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
+#fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+#header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
+#occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
+#input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
+#output_fname = "/home/niek/HSA_data/results/matches_found"
+#fig_fname = "/home/niek/HSA_data/results/true_matches_by_number_of_experiments.png"
+
+
 pr.init()
 #load native protein
 with open(fasta_fname, 'r') as f:
@@ -37,35 +46,36 @@ with open(occuring_experiments_fname, 'r') as f:
 with open(output_fname, 'w') as out:
     out.write("number of experiments used and correct matches acquired by them\n")
 
-allMatches = set()
 matches = {}
-idx = 0
 for ex in runs:
-    idx += 1
     matches[ex] = set()
-    chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
-    for chunk in chunks:
-        for i,row in chunk.iterrows():
-            if row['Run'] != ex:
-                continue
-            try:
-                aa1Idx = int(row['ProteinLink1'])
-                aa2Idx = int(row['ProteinLink2'])
-            except ValueError:
-                continue
-            if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                continue
-            if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
-                continue
-            res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-            res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-            realdist = res1pos.distance(res2pos)
-            if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
-                matches[ex].add((aa1Idx, aa2Idx))
+
+chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
+for chunk in chunks:
+    for i,row in chunk.iterrows():
+        try:
+            aa1Idx = int(row['ProteinLink1'])
+            aa2Idx = int(row['ProteinLink2'])
+        except ValueError:
+            continue
+        if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
+            continue
+        if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+            continue
+        res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
+        res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
+        realdist = res1pos.distance(res2pos)
+        if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
+            matches[row['Run']].add((aa1Idx, aa2Idx))
+    print("Finished a chunk.")
+
+idx = 0
+allMatches = set()
+for ex in matches:
+    idx += 1
     allMatches.update(matches[ex])
     with open(output_fname, 'a') as out:
         out.write("%3d %4d\n"%(idx,len(allMatches)))
-    print("finished experiment %s (number %d)."%(ex,idx))
 
 #mean number of matches per experiment: 869 (ex 1 2)
 
@@ -73,9 +83,9 @@ x = []
 y = []
 with open(output_fname, 'r') as result:
     for line in result:
-        if line.startwith('number'):
+        if line.startswith('number'):
             continue
-        numbers = line.split()
+        numbers = line.strip().split()
         x += [numbers[0]]
         y += [numbers[1]]
 
