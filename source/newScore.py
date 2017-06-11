@@ -9,6 +9,7 @@ fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
 header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
 fig_fname = "/home/nieck/HSA_data/results/new_score_precision_everything.png"
+output_fname = "/home/nieck/HSA_data/results/new_score_precision_everything"
 
 #native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
 #fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
@@ -79,6 +80,12 @@ x_newScore = np.arange(len(trueMatches_newScore))
 x_averageScore = np.arange(len(trueMatches_averageScore))
 y_newScore = np.cumsum(trueMatches_newScore) / x_newScore
 y_averageScore = np.cumsum(trueMatches_averageScore) / x_averageScore
+
+with open(output_fname, 'w') as out:
+    out.write("x, new score, average score\n")
+    for i in range(len(x_newScore)):
+        out.write("%f %f %f\n"%(x_newScore[i], y_newScore[i], y_averageScore[i]))
+
 plt.figure()
 plt.plot(x_newScore,y_newScore, label="new score")
 plt.plot(x_averageScore,y_averageScore, label="average score")
