@@ -8,8 +8,8 @@ fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
 header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
 occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-output_fname = "/home/nieck/HSA_data/results/matches_found"
-fig_fname = "/home/nieck/HSA_data/results/true_matches_by_number_of_experiments.png"
+output_fname = "/home/nieck/HSA_data/results/matches_found_top1"
+fig_fname = "/home/nieck/HSA_data/results/true_matches_by_number_of_experiments_top1.png"
 
 #native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
 #fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
@@ -68,7 +68,7 @@ for chunk in chunks:
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         realdist = res1pos.distance(res2pos)
         #if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
-        if realdist < 25 and realdist > 15:
+        if row['MatchRank'] < 2 and realdist < 25 and realdist > 15:
             matches[row['Run']].add((aa1Idx, aa2Idx))
     print("Finished chunk number %3d."%chunkCount)
 
