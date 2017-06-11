@@ -1,6 +1,6 @@
 column name             visual inspection       type                meaning
     
-Run                                             string              The experiment like 'Belsom_Rappsilber_PurHSA_01'. An experiment contains ~7k unique scans
+Run                                             string              The experiment like 'Belsom_Rappsilber_PurHSA_01'. An experiment contains ~7k unique scans. There are 319 different experiments in all the data
 Scan                                            integer             in each experiment, a scan contains 1 to hundreds of rows in the csv.
 decoy                                           boolean             is this a decoy? 0 for decoy, 1 for no decoy
 MatchRank                                       interger            rank as explanation (1 is best explanation,...)

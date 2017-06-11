@@ -67,7 +67,8 @@ for chunk in chunks:
         res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         realdist = res1pos.distance(res2pos)
-        if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
+        #if row['MatchRank'] <= 5 and realdist < 25 and realdist > 15:
+        if realdist < 25 and realdist > 15:
             matches[row['Run']].add((aa1Idx, aa2Idx))
     print("Finished chunk number %3d."%chunkCount)
 
@@ -91,7 +92,6 @@ with open(output_fname, 'r') as result:
         x += [numbers[0]]
         y += [numbers[1]]
 
-plt.figure()
 plt.plot(x,y)
 plt.xlabel("number of experiments used\n")
 plt.ylabel("number of distinct correct matches found\n")
