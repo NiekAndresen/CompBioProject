@@ -1,6 +1,6 @@
 import numpy as np
 
-input_fname = "/home/nieck/HSA_data/results/everything_statistics"
+input_fname = "/home/niek/Computational Biology/CompBioProject/results/everything_statistics"
 
 #get number of lines
 nofLines = 0
@@ -32,6 +32,12 @@ with open(input_fname, 'r') as f:
 
 print("number of experiments:", len(ex_names))
 
+x = [1,2,3,5,10,20]
+y = [top1.mean(), top2.mean(), top3.mean(), top5.mean(), top10.mean(), top20.mean()]
+import matplotlib.pyplot as plt
+plt.figure()
+plt.plot(x,y,'x')
+plt.show()
 print("correlation:", correlations.mean())
 print("top1:", top1.mean())
 print("top2:", top2.mean())
