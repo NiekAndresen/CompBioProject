@@ -8,21 +8,6 @@ import ipdb
 from os.path import *
 import os
 
-def _load_pdb(pdbFile):
-    p = PDBParser(PERMISSIVE=1)
-    structure_id = "native"
-    return p.get_structure(structure_id, pdbFile)
-
-def read_fasta(fasta_file):
-    file = open(fasta_file, 'r')
-    sequence = ''
-    for line in file:
-        strline = str(line).strip()
-        if strline.count(">") == 0:
-            sequence += strline
-    file.close()
-    return sequence
-
 def extract_dists_from_pdb(pdb_fname, thresh=8):
     """
     Extracts all residue-residue distances (between ca and cb)
@@ -136,6 +121,43 @@ def load_native_contacts(native_pdb_fname, thresh=8):
     ca, cb = extract_dists_from_pdb(native_pdb_fname, thresh=(thresh + 2))
     native_cst = get_contacts_from_dists(cb, thresh=thresh)
     return native_cst
+""""""""""""""""""""""""""""""""
+""""""" Help Functions """""""""
+""""""""""""""""""""""""""""""""
 
+
+def _is_glycine(residue_n, protein_seq):
+    return protein_seq[residue_n - 1] == "G"
+
+
+def _eucl_dist(point1, point2):
+    """Calculate Euclidean distance between two points in 3D space"""
+    return sqrt((point1[0] - point2[0]) * (point1[0] - point2[0]) +
+                (point1[1] - point2[1]) * (point1[1] - point2[1]) +
+                (point1[2] - point2[2]) * (point1[2] - point2[2]))
+
+
+def _load_pdb(pdbFile):
+    p = PDBParser(PERMISSIVE=1)
+    structure_id = "native"
+    return p.get_structure(structure_id, pdbFile)
+
+
+def _cst(res1, res2):
+    return (min(res1, res2), max(res1, res2))
+
+def read_fasta(fasta_file):
+    file = open(fasta_file, 'r')
+    sequence = ''
+    for line in file:
+        strline = str(line).strip()
+        if strline.count(">") == 0:
+            sequence += strline
+    file.close()
+    return sequence
+
+""""""""""""""""""""""""""""""""""""
+""""""""""""""" main """""""""""""""
+""""""""""""""""""""""""""""""""""""
 nat_cst = load_native_contacts("/home/niek/HSA_data/1ao6/1ao6A.pdb")
 write_rosetta_cst_restraints(nat_cst, "/home/niek/HSA_data/1ao6/1ao6A.cst", "/home/niek/HSA_data/1ao6/1ao6A.fasta")
