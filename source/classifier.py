@@ -78,9 +78,9 @@ for chunk in chunks:
         X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-for contact in contacts:
-    if (contact[0]+4, contact[1]+4) in X:
-        X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
+#for contact in contacts:
+#    if (contact[0]+4, contact[1]+4) in X:
+#        X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
 
 X = np.concatenate([X[x] for x in X], axis=0)
 print(X.shape)
