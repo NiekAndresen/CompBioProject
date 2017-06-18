@@ -87,6 +87,10 @@ print(X.shape)
 print(X[:,-1].mean())
 
 classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear']}, nfolds=5, nrepetitions=2)
+print("prediction on training set, label:")
+prediction = classifier.predict(X[:,:-1])
+for i in range(len(X[:,-1]):
+    print(prediction[i], X[:,-1][i])
 print('xval loss:', classifier.cvloss)
 with open(output_fname, 'w') as f:
     f.write("%f\n"%classifier.cvloss)
