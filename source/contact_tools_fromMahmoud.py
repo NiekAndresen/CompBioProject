@@ -4,7 +4,6 @@ import numpy as np
 from Bio.PDB.PDBParser import PDBParser
 from math import sqrt
 from itertools import *
-import sequence_alignment_tools as sat
 import ipdb
 from os.path import *
 import os
@@ -19,64 +18,6 @@ __email__ = "mahmoud.mabrouk@tu-berlin.de"
 __version__ = "0.1"
 # Path to the pdbtools (see https://code.google.com/p/pdb-tools/)
 PDBTOOLS_PATH = "/scratch/mahmoud/tools/pdb_tools/"
-
-
-def create_contact_maps_from_template_complex(template_pdb_fname,
-                                              target_pdb_fname,
-                                              fasta_alignment,
-                                              contact_output_fname):
-    """
-    Creates contact maps for a target using a template structure
-    and the sequence alignment between the target and the
-    template.
-    First aligns the template pdb sequence to the template sequence
-    in the alignment file. Then, using the template_pdb/template_seq
-    alignment and the template_seq/target alignment, map the contacts
-    from the template pdb to the target.
-    Args:
-        template_pdb_fname: Path to the template structure
-        fasta_alignment: Path to the fasta file containing the alignment
-                         between the target sequence and the template sequence
-                         Make sure that the target sequence come first in the
-                         fasta file
-        contact_output_fname: Path to the contact file to be written for the
-                              target in the casp format
-    Returns:
-        None. Writes the contact file contact_output_fname
-    """
-    # Extract contacts from the template
-    template_pdb_cst = extract_contacts_from_structure(template_pdb_fname)
-
-    # Extract the sequence from the template structure
-    template_pdb_fasta = extract_sequence_from_pdb(template_pdb_fname)
-
-    # Extract template sequence from alignment
-    template_aln_fasta = sat.extract_sequence_from_alignment(fasta_alignment)
-    print(template_pdb_fasta, template_aln_fasta)
-    # Align template sequences and map the contacts
-    try:
-        template_aln = sat.align_sequences(template_aln_fasta,
-                                           template_pdb_fasta)
-    except:
-        print("Error aligning sequences %s and %s" % (template_pdb_fasta,
-                                                      template_aln_fasta))
-        return
-    template_aln_cst = map_contacts_with_aln(template_pdb_cst, template_aln)
-
-    # Map contacts to target using the last alignment
-    target_cst = map_contacts_with_aln(template_aln_cst, fasta_alignment)
-
-    target_pdb_fasta = extract_sequence_from_pdb(target_pdb_fname)
-
-    target_aln_fasta = sat.extract_sequence_from_alignment(fasta_alignment,
-                                                           entry_n=1)
-    target_aln = sat.align_sequences(target_pdb_fasta,
-                                     target_aln_fasta)
-    target_pdb_cst = map_contacts_with_aln(target_cst, target_aln)
-
-    # Writes the contact in the output file
-    write_casp_cst_file(target_pdb_cst, contact_output_fname)
-
 
 def extract_sequence_from_pdb(pdb_fname):
     """
@@ -93,75 +34,6 @@ def extract_sequence_from_pdb(pdb_fname):
     os.system(cmd)
     return out_fasta_fname
 
-
-def map_contacts_with_aln(contacts, alignment_fname):
-    """
-    Use fasta alignment to map the contacts from the template (second
-    entry) to the target.
-    Args:
-        contacts: list(tuple(res1, res2))
-        alignment_fname: Alignment between target (first entry) and
-                         template (second entry) in fasta format
-    Returns:
-        contacts mapped from the template to the target (same input format)
-    """
-    # Create a mapping between the target residues and the template residues
-    alignment = sat.parse_fasta_alignment(alignment_fname)
-    target_i, template_i = 0, 0
-    tt_map = {}  # mapping between template residues and target residues
-    for target_res, template_res in zip(alignment[0][1], alignment[1][1]):
-        if target_res != '-':
-            target_i += 1
-        if template_res != '-':
-            template_i += 1
-        if target_res != '-' and template_res != '-':
-            tt_map[template_i] = target_i
-    # Map the contacts from the template to the target
-    out_csts = []
-    for (res1, res2) in contacts:
-        if res1 in tt_map and res2 in tt_map:
-            out_csts.append((tt_map[res1], tt_map[res2]))
-    return out_csts
-
-
-def create_contact_maps_from_template(template_pdb_fname,
-                                      fasta_alignment,
-                                      contact_output_fname):
-    """
-    Creates contact maps for a target using a template structure
-    and the sequence alignment between the target and the
-    template
-    Args:
-        template_pdb_fname: Path to the template structure
-        fasta_alignment: Path to the fasta file containing the alignment
-                         between the target sequence and the template sequence
-                         Make sure that the target sequence come first in the
-                         fasta file
-        contact_output_fname: Path to the contact file to be written for the
-                              target in the casp format
-    Returns:
-        None. Writes the contact file contact_output_fname
-    """
-    # Extract contacts from the template
-    template_cst = extract_contacts_from_structure(template_pdb_fname)
-    # Create a mapping between the target residues and the template residues
-    alignment = sat.parse_fasta_alignment(fasta_alignment)
-    target_i, template_i = 0, 0
-    tt_map = {}  # mapping between template residues and target residues
-    for target_res, template_res in zip(alignment[0][1], alignment[1][1]):
-        if target_res != '-':
-            target_i += 1
-        if template_res != '-':
-            template_i += 1
-        if target_res != '-' and template_res != '-':
-            tt_map[template_i] = target_i
-    # Map the contacts from the template to the target
-    out_csts = []
-    for (res1, res2) in template_cst:
-        if res1 in tt_map and res2 in tt_map:
-            out_csts.append((tt_map[res1], tt_map[res2]))
-    # Writes the contact in the output file
-    write_casp_cst_file(out_csts, contact_output_fname)
 
 
 def extract_contacts_from_structure(pdb_fname):
