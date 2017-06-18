@@ -4,7 +4,7 @@ import itertools
 import time
 
 def zero_one_loss(y_true, y_pred):
-    return (np.sign(y_true) != np.sign(y_pred)).sum() / len(y_true)
+    return (np.sign(y_true) != np.sign(y_pred)).sum() / float(len(y_true))
 
 def cv(X, y, method, parameters, nfolds=10, nrepetitions=5, loss_function=zero_one_loss):
     #see if two classes are present
