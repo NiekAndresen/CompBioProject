@@ -4,7 +4,6 @@ import numpy as np
 from Bio.PDB.PDBParser import PDBParser
 from math import sqrt
 from itertools import *
-import ipdb
 from os.path import *
 import os
 
