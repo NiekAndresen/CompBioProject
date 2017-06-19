@@ -5,10 +5,10 @@ import time
 
 def zero_one_loss(y_true, y_pred):
     return (np.sign(y_true) != np.sign(y_pred)).sum() / float(len(y_true))
-    
+
 #assumes classes 0 and 1
 def false_discovery_rate(y_true, y_pred):
-    return np.logical_and(y_pred, ~y_true).sum() / float(y_pred.sum())
+    return np.logical_and(y_pred==1, y_true==0).sum() / float(y_pred.sum())
 
 def cv(X, y, method, parameters, nfolds=10, nrepetitions=5, loss_function=zero_one_loss):
     #see if two classes are present

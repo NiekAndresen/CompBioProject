@@ -48,7 +48,7 @@ contacts = ct.extract_contacts_from_structure(native_fname)
 #print("contacts:", contacts)
 
 #take a number of rows out of each experiment
-nofSamplesPerChunk = 25#10000
+nofSamplesPerChunk = 100#10000
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -78,19 +78,21 @@ for chunk in chunks:
         X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-#for contact in contacts:
-#    if (contact[0]+4, contact[1]+4) in X:
-#        X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
+for contact in contacts:
+    if (contact[0]+4, contact[1]+4) in X:
+        X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
 
 X = np.concatenate([X[x] for x in X], axis=0)
+nofPositives = np.sum(X[:,-1])
+X = np.concatenate([X[X[:,-1]==1], X[X[:,-1]==0][:nofPositives]], axis=0)
 print(X.shape)
 print(X[:,-1].mean())
 
-classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear']}, nfolds=5, nrepetitions=2)
-print("prediction on training set, label:")
-prediction = classifier.predict(X[:,:-1])
-for i in range(len(X[:,-1]):
-    print(prediction[i], X[:,-1][i])
+classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear']}, nfolds=5, nrepetitions=2, loss_function=xval.false_discovery_rate)
+predictions = classifier.predict(X[:,:-1])
 print('xval loss:', classifier.cvloss)
+print('discoveries:', predictions.sum())
 with open(output_fname, 'w') as f:
+    f.write("classifier type: SVM, kernel: %s\n"%(classifier.kernel))
+    f.write("discoveries: %d\n"%int(predictions.sum()))
     f.write("%f\n"%classifier.cvloss)
