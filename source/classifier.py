@@ -78,17 +78,19 @@ for chunk in chunks:
         X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
+for pairkey in X:
+    X[pairkey][0,2] /= X[pairkey][0,0]
 for contact in contacts:
     if (contact[0]+4, contact[1]+4) in X:
         X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
 
 X = np.concatenate([X[x] for x in X], axis=0)
-nofPositives = np.sum(X[:,-1])
+nofPositives = int(np.sum(X[:,-1]))
 X = np.concatenate([X[X[:,-1]==1], X[X[:,-1]==0][:nofPositives]], axis=0)
 print(X.shape)
 print(X[:,-1].mean())
 
-classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear']}, nfolds=5, nrepetitions=2, loss_function=xval.false_discovery_rate)
+classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 predictions = classifier.predict(X[:,:-1])
 print('xval loss:', classifier.cvloss)
 print('discoveries:', predictions.sum())
