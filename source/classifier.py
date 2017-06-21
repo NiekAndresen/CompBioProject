@@ -5,21 +5,43 @@ import matplotlib.pyplot as plt
 import contact_tools_fromMahmoud as ct
 import crossval as xval
 from sklearn.svm import SVC
+import re
 
-native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
-fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
-occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
-input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-output_fname = "/home/nieck/HSA_data/results/crossval"
+#native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
+#fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+#header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
+#occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
+#input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+#output_fname = "/home/nieck/HSA_data/results/crossval"
 
-#native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
-#fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-#header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
-#occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
-#input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
-#output_fname = "/home/niek/HSA_data/results/crossval"
+native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
+fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
+occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
+input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
+output_fname = "/home/niek/HSA_data/results/crossval"
 
+# For a peptide link map gives three lists:
+# - list of amino acids (1-letter) that might also be matches
+# - list of probabilities that these aas are the match
+# - list of positions relative to the best match that these aas have
+def get_neighborhood_list(linkMap):
+    matches = re.findall(r'(\w+(?:-\w+)?)\((\d\.\d{2})\)', linkMap)
+    aaList = []; valList = []; posList = []; origPosList = np.arange(len(matches)); valSum = 0
+    for i,match in enumerate(matches):
+        value = float(match[1])
+        if len(match[0])==1:
+            aaList += [match[0]]
+            valList += [value]
+            posList += [origPosList[i]]
+        elif match[0][-1].isupper():
+            aaList += [match[0][-1]]
+            valList += [value]
+            posList += [origPosList[i]]
+        valSum += value
+    valList = np.array(valList) / valSum
+    posList -= posList[np.argmax(valList)]
+    return aaList, valList, posList
 
 pr.init()
 #load native protein
@@ -48,7 +70,7 @@ contacts = ct.extract_contacts_from_structure(native_fname)
 #print("contacts:", contacts)
 
 #take a number of rows out of each experiment
-nofSamplesPerChunk = 100#10000
+nofSamplesPerChunk = 10#10000
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -69,12 +91,25 @@ for chunk in chunks:
             continue
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in X:
-            X[pairkey] = np.zeros(5)[np.newaxis,:]
+            X[pairkey] = np.zeros(6)[np.newaxis,:]
         res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-        X[pairkey][0,0] += 1#number of contributing rows
+        X[pairkey][0,0] += 1 #number of contributing rows
         X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-        X[pairkey][0,2] += row['match score'] #score
+        aaList, valList, posList = get_neighborhood_list(row['PeptideLinkMap1'])
+        print('ye')
+        print("from pdb:", native.residue_type(row['Start1']-4).name1())
+        print(row['PeptideLinkMap1'])
+        #print("from pdb:", native.residue_type(aa1Idx-4).name1())
+        #print("from LinkedAminoAcid:", row['Linked AminoAcid 1'])
+        #print("pos List in fasta:")
+        #for pos in posList:
+        #    print(native_fasta[aa1Idx + pos])
+        print(aaList)
+        print(valList)
+        print(posList)
+        #    Xtest[pairkey][0,2] += 1 #number of neighborhood appearances
+        X[pairkey][0,3] += row['match score'] #score
         X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
@@ -116,12 +151,12 @@ for chunk in chunks:
             continue
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in Xtest:
-            Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
+            Xtest[pairkey] = np.zeros(6)[np.newaxis,:]
         res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-        Xtest[pairkey][0,0] += 1#number of contributing rows
+        Xtest[pairkey][0,0] += 1 #number of contributing rows
         Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-        Xtest[pairkey][0,2] += row['match score'] #score
+        Xtest[pairkey][0,3] += row['match score'] #score
         Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Building test set. Finished chunk number %3d."%chunkCount)
 
