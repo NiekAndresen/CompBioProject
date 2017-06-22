@@ -31,6 +31,7 @@ columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
 ##takes dict where for one experiment there is a list of pairs for each scan.
+##a pair contains distance and rank. pairs are sorted ascending by rank.
 ##calculates the overall fraction of contacts that exist in the crystal as well (<thresh)
 ##taking into account the top <number> of ranks
 def getFoundRatio(dic, thresh, number):
@@ -46,13 +47,14 @@ def getFoundRatio(dic, thresh, number):
         n = min(number, len(dic[key]))
         for match in dic[key][:n]:
             count += 1
-            if match[1] < thresh:
+            if match[0] < thresh:
                 foundCorrect += 1
     if not foundSomeMatch:
         return 0.
     return float(foundCorrect) / count
 
 ##takes dict where for one experiment there is a list of pairs for each scan.
+##a pair contains distance and rank. pairs are sorted ascending by rank.
 ##calculates the overall fraction of contacts that exist in the crystal as well (<thresh)
 def getTotalFoundRatio(dic, thresh):
     foundCorrect = 0
@@ -66,7 +68,7 @@ def getTotalFoundRatio(dic, thresh):
         foundSomeMatch = True
         for match in dic[key]:
             count += 1
-            if match[1] < thresh:
+            if match[0] < thresh:
                 foundCorrect += 1
     if not foundSomeMatch:
         return 0.
@@ -95,7 +97,7 @@ with open(occuring_experiments_fname, 'r') as f:
     runs = f.readline()[:-1].split(',')
 
 with open(output_fname, 'w') as out:
-    out.write("%-35s  %-7s  %-7s  %-7s  %-7s  %-7s  %-7s  %-7s  %-7s\n"%("experiment","correla","top1","top2","top3","top5","top10","top20","top all"))
+    out.write("%-35s  %-7s  %-7s  %-7s  %-7s  %-7s  %-7s  %-7s\n"%("experiment","top1","top2","top3","top5","top10","top20","top all"))
 
 #top match scores
 threshold = 20.#Angstrom
@@ -121,13 +123,14 @@ for ex in runs:
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
             realdist = res1pos.distance(res2pos)
-            scans[row['Scan']] += [(row['match score'], realdist)]
+            #scans[row['Scan']] += [(row['match score'], realdist)]
+            scans[row['Scan']] += [(realdist, row['MatchRank'])]
     for scan in scans.keys():
-        if not all(scans[scan][i][0] >= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
-            scans[scan].sort(key=lambda match: match[0], reverse=True) #descending by score
+        if not all(scans[scan][i][0] <= scans[scan][i+1][0] for i in range(len(scans[scan])-1)):#if not sorted
+            scans[scan].sort(key=lambda match: match[0], reverse=False) #ascending by rank
     with open(output_fname, 'a') as out:
-        out.write("%-35s  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f\n"\
-            %(ex, getCorrelation(scans), getFoundRatio(scans, 20., 1), getFoundRatio(scans, 20., 2), getFoundRatio(scans, 20., 3), getFoundRatio(scans, 20., 5), getFoundRatio(scans, 20., 10), getFoundRatio(scans, 20., 20), getTotalFoundRatio(scans, 20.)))
+        out.write("%-35s  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f  %07.4f\n"\
+            %(ex, getFoundRatio(scans, 20., 1), getFoundRatio(scans, 20., 2), getFoundRatio(scans, 20., 3), getFoundRatio(scans, 20., 5), getFoundRatio(scans, 20., 10), getFoundRatio(scans, 20., 20), getTotalFoundRatio(scans, 20.)))
     #contactFoundRatio[ex] = getFoundRatio(scans, 20.)
 
 #print(contactFoundRatio)
