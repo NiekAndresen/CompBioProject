@@ -24,8 +24,8 @@ output_fname = "/home/nieck/HSA_data/results/crossval"
 # For a peptide link map gives three lists:
 # - list of amino acids (1-letter) that might also be matches
 # - list of probabilities that these aas are the match
-# - list of index positions in the protein
-def get_neighborhood_list(linkMap, startIdx):
+# - list of positions relative to the best match that these aas have
+def get_neighborhood_list(linkMap):
     matches = re.findall(r'(\w+(?:-\w+)?)\((\d\.\d{2})\)', linkMap)
     aaList = []; valList = []; posList = []; origPosList = np.arange(len(matches)); valSum = 0
     for i,match in enumerate(matches):
@@ -33,13 +33,14 @@ def get_neighborhood_list(linkMap, startIdx):
         if len(match[0])==1:
             aaList += [match[0]]
             valList += [value]
-            posList += [origPosList[i] + startIdx]
+            posList += [origPosList[i]]
         elif match[0][-1].isupper():
             aaList += [match[0][-1]]
             valList += [value]
-            posList += [origPosList[i] + startIdx]
+            posList += [origPosList[i]]
         valSum += value
     valList = np.array(valList) / valSum
+    posList -= posList[np.argmax(valList)]
     return aaList, valList, posList
 
 pr.init()
@@ -69,7 +70,7 @@ contacts = ct.extract_contacts_from_structure(native_fname)
 #print("contacts:", contacts)
 
 #take a number of rows out of each experiment
-nofSamplesPerChunk = 1000#10000
+nofSamplesPerChunk = 10#10000
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -77,30 +78,42 @@ for chunk in chunks:
     chunkCount += 1
     rows = chunk.sample(n=nofSamplesPerChunk)
     for i,row in rows.iterrows():
-        aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
-        aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        #print("ye", aa1List[i], native.residue_type(int(pos1List[i]-4)).name1())
-        for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            aa1Idx = int(aa1Idx)
-            aa2Idx = int(aa2Idx)
-            if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                continue
-            if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
-                continue
-            if aa1Idx>aa2Idx:
-                aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-            pairkey = (aa1Idx, aa2Idx)
-            if not pairkey in X:
-                X[pairkey] = np.zeros(5)[np.newaxis,:]
-            res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-            res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-            X[pairkey][0,0] += 1 #number of contributing entries
-            X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-            X[pairkey][0,2] += row['match score'] #score
-            X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
+        try:
+            aa1Idx = int(row['ProteinLink1'])
+            aa2Idx = int(row['ProteinLink2'])
+        except ValueError:
+            continue
+        if aa1Idx > aa2Idx:
+            aa1Idx,aa2Idx = aa2Idx,aa1Idx#smaller index first for contact list
+        if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
+            continue
+        if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+            continue
+        pairkey = (aa1Idx, aa2Idx)
+        if not pairkey in X:
+            X[pairkey] = np.zeros(6)[np.newaxis,:]
+        res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
+        res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
+        X[pairkey][0,0] += 1 #number of contributing rows
+        X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
+        aaList, valList, posList = get_neighborhood_list(row['PeptideLinkMap1'])
+        print('ye')
+        print("from pdb:", native.residue_type(row['Start1']-4).name1())
+        print(row['PeptideLinkMap1'])
+        #print("from pdb:", native.residue_type(aa1Idx-4).name1())
+        #print("from LinkedAminoAcid:", row['Linked AminoAcid 1'])
+        #print("pos List in fasta:")
+        #for pos in posList:
+        #    print(native_fasta[aa1Idx + pos])
+        print(aaList)
+        print(valList)
+        print(posList)
+        #    Xtest[pairkey][0,2] += 1 #number of neighborhood appearances
+        X[pairkey][0,3] += row['match score'] #score
+        X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-for pairkey in X: #make score to average score
+for pairkey in X:
     X[pairkey][0,2] /= X[pairkey][0,0]
 for contact in contacts:
     if (contact[0]+4, contact[1]+4) in X:
@@ -125,30 +138,29 @@ for chunk in chunks:
     chunkCount += 1
     rows = chunk.sample(n=nofSamplesPerChunk)
     for i,row in rows.iterrows():
-        aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
-        aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        #print("ye", aa1List[i], native.residue_type(int(pos1List[i]-4)).name1())
-        for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            aa1Idx = int(aa1Idx)
-            aa2Idx = int(aa2Idx)
-            if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                continue
-            if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
-                continue
-            if aa1Idx>aa2Idx:
-                aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-            pairkey = (aa1Idx, aa2Idx)
-            if not pairkey in Xtest:
-                Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
-            res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-            res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-            Xtest[pairkey][0,0] += 1 #number of contributing entries
-            Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-            Xtest[pairkey][0,2] += row['match score'] #score
-            Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
-    print("Finished chunk number %3d."%chunkCount)
+        try:
+            aa1Idx = int(row['ProteinLink1'])
+            aa2Idx = int(row['ProteinLink2'])
+        except ValueError:
+            continue
+        if aa1Idx > aa2Idx:
+            aa1Idx,aa2Idx = aa2Idx,aa1Idx#smaller index first for contact list
+        if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
+            continue
+        if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+            continue
+        pairkey = (aa1Idx, aa2Idx)
+        if not pairkey in Xtest:
+            Xtest[pairkey] = np.zeros(6)[np.newaxis,:]
+        res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
+        res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
+        Xtest[pairkey][0,0] += 1 #number of contributing rows
+        Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
+        Xtest[pairkey][0,3] += row['match score'] #score
+        Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
+    print("Building test set. Finished chunk number %3d."%chunkCount)
 
-for pairkey in Xtest: #make score to average score
+for pairkey in Xtest:
     Xtest[pairkey][0,2] /= Xtest[pairkey][0,0]
 for contact in contacts:
     if (contact[0]+4, contact[1]+4) in Xtest:
