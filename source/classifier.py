@@ -62,9 +62,6 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
-with open(occuring_experiments_fname, 'r') as f:
-    runs = f.readline()[:-1].split(',')
-
 contacts = ct.extract_contacts_from_structure(native_fname)
 #print("contacts:", contacts)
 
