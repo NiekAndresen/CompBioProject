@@ -1,0 +1,1 @@
+Run,Scan,decoy,MatchRank,BasePeptide1,PeptideLinkMap1,Start1,LengthPeptide1,Linked_AminoAcid_1,ProteinLink1,BasePeptide2,PeptideLinkMap2,Start2,LengthPeptide2,Linked_AminoAcid_2,ProteinLink2,betaCount,mgcScore,mgxScore,Precoursor Absolute Error,MeanSquareError,FragmentLibraryScore,AllScore,MatchScore,match_score
