@@ -91,25 +91,25 @@ for chunk in chunks:
             continue
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in X:
-            X[pairkey] = np.zeros(6)[np.newaxis,:]
+            X[pairkey] = np.zeros(4)[np.newaxis,:]
         res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         X[pairkey][0,0] += 1 #number of contributing rows
         X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-        aaList, valList, posList = get_neighborhood_list(row['PeptideLinkMap1'])
-        print('ye')
-        print("from pdb:", native.residue_type(row['Start1']-4).name1())
-        print(row['PeptideLinkMap1'])
+        #aaList, valList, posList = get_neighborhood_list(row['PeptideLinkMap1'])
+        #print('ye')
+        #print("from pdb:", native.residue_type(row['Start1']-4).name1())
+        #print(row['PeptideLinkMap1'])
         #print("from pdb:", native.residue_type(aa1Idx-4).name1())
         #print("from LinkedAminoAcid:", row['Linked AminoAcid 1'])
         #print("pos List in fasta:")
         #for pos in posList:
         #    print(native_fasta[aa1Idx + pos])
-        print(aaList)
-        print(valList)
-        print(posList)
+        #print(aaList)
+        #print(valList)
+        #print(posList)
         #    Xtest[pairkey][0,2] += 1 #number of neighborhood appearances
-        X[pairkey][0,3] += row['match score'] #score
+        X[pairkey][0,2] += row['match score'] #score
         X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
@@ -151,12 +151,12 @@ for chunk in chunks:
             continue
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in Xtest:
-            Xtest[pairkey] = np.zeros(6)[np.newaxis,:]
+            Xtest[pairkey] = np.zeros(4)[np.newaxis,:]
         res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
         res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         Xtest[pairkey][0,0] += 1 #number of contributing rows
         Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-        Xtest[pairkey][0,3] += row['match score'] #score
+        Xtest[pairkey][0,2] += row['match score'] #score
         Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Building test set. Finished chunk number %3d."%chunkCount)
 
