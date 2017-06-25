@@ -7,19 +7,21 @@ import crossval as xval
 from sklearn.svm import SVC
 import re
 
-native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
-fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
-occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
-input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-output_fname = "/home/nieck/HSA_data/results/crossval"
-
-#native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
-#fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-#header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
-#occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
-#input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
-#output_fname = "/home/niek/HSA_data/results/crossval"
+athome = True #use directory on my local computer
+if not athome:
+    native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
+    fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+    header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
+    occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
+    input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+    output_fname = "/home/nieck/HSA_data/results/crossval"
+else:
+    native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
+    fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+    header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
+    occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
+    input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
+    output_fname = "/home/niek/HSA_data/results/crossval"
 
 # For a peptide link map gives three lists:
 # - list of amino acids (1-letter) that might also be matches
@@ -88,17 +90,19 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in X:
-                X[pairkey] = np.zeros(5)[np.newaxis,:]
+                X[pairkey] = np.zeros(4)[np.newaxis,:]
+                #X[pairkey][0,1] = np.inf #for min()
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
             X[pairkey][0,0] += 1 #number of contributing entries
             X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-            X[pairkey][0,2] += row['match score'] #score
+            #X[pairkey][0,1] = min(X[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
+            X[pairkey][0,2] += row['match score'] * val1List[i] * val2List[i] #weighted score
             X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-for pairkey in X: #make score to average score
-    X[pairkey][0,2] /= X[pairkey][0,0]
+#for pairkey in X: #make score to average score
+#    X[pairkey][0,3] /= X[pairkey][0,0]
 for contact in contacts:
     if (contact[0]+4, contact[1]+4) in X:
         X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
@@ -110,7 +114,7 @@ print("training set shape:", X.shape)
 print("proportion of positives in training set:", X[:,-1].mean())
 
 #crossvalidate and train
-classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear', 'rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 print('classifier kerneltype:', classifier.kernel)
 print('xval loss (0-1):', classifier.cvloss)
 
@@ -136,17 +140,19 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in Xtest:
-                Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
+                Xtest[pairkey] = np.zeros(4)[np.newaxis,:]
+                #Xtest[pairkey][0,1] = np.inf #for min()
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
             Xtest[pairkey][0,0] += 1 #number of contributing entries
             Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-            Xtest[pairkey][0,2] += row['match score'] #score
+            #Xtest[pairkey][0,1] = min(Xtest[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
+            Xtest[pairkey][0,2] += row['match score'] * val1List[i] * val2List[i] #weighted score
             Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-for pairkey in Xtest: #make score to average score
-    Xtest[pairkey][0,2] /= Xtest[pairkey][0,0]
+#for pairkey in Xtest: #make score to average score
+#    Xtest[pairkey][0,3] /= Xtest[pairkey][0,0]
 for contact in contacts:
     if (contact[0]+4, contact[1]+4) in Xtest:
         Xtest[(contact[0]+4, contact[1]+4)][0,3] = True #contact
@@ -157,8 +163,8 @@ print("test set shape:", Xtest.shape)
 testPredictions = classifier.predict(Xtest[:,:-1])
 print("proportion of positives in test set:", Xtest[:,-1].mean())
 print("test set discoveries:", testPredictions.sum())
-testNofPosPredicted = testPredictions.sum()
-testNofFalseDiscoveries = testPredictions[np.logical_and(testPredictions==1, Xtest[:,-1]==0)].sum()
+testNofPosPredicted = (testPredictions==1).sum()
+testNofFalseDiscoveries = (np.logical_and(testPredictions==1, Xtest[:,-1]==0)).sum()
 print("test set FDR:", float(testNofFalseDiscoveries)/testNofPosPredicted)
 with open(output_fname, 'w') as f:
     f.write("classifier type: SVM, kernel: %s\n"%(classifier.kernel))
