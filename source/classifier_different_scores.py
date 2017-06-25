@@ -124,6 +124,15 @@ for chunk in chunks:
             continue
         if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
             continue
+        ValidColumn = True
+        for scorekey in scorecolumns: #check if all scores can be floats
+            try:
+                float(row[scorekey])
+            except ValueError:
+                ValidColumn = False
+                break
+        if not ValidColumn:
+            continue
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in Xtest:
             Xtest[pairkey] = np.zeros(3+len(scorecolumns))[np.newaxis,:]
@@ -132,7 +141,7 @@ for chunk in chunks:
         Xtest[pairkey][0,0] += 1 #number of contributing rows
         Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
         for idx, scorekey in enumerate(scorecolumns):
-            Xtest[pairkey][0,idx+2] += row[scorekey]
+            Xtest[pairkey][0,idx+2] += float(row[scorekey])
         Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
