@@ -2,9 +2,15 @@
 import pandas as pd
 import numpy as np
 
-header_input = '/home/nieck/CompBioProject/headers/header_reduced'
-input_file = "/home/nieck/HSA_data/SDA_HSA_Everything_3.csv"
-output_file = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+athome = True
+if not athome:
+    header_input = '/home/nieck/CompBioProject/headers/header_reduced'
+    input_file = "/home/nieck/HSA_data/SDA_HSA_Everything_3.csv"
+    output_file = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+else:
+    header_input = "/home/niek/Computational Biology/CompBioProject/headers/header_different_scores"
+    input_file = "/home/niek/HSA_data/data_experiment_1_2.csv"
+    output_file = "/home/niek/HSA_data/data_experiment_1_2_diffScores.csv"
 
 with open(header_input, 'r') as hr:
     header = hr.readline()[:-1] #removed \n at the end of line
