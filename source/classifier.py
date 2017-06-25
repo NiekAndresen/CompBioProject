@@ -7,7 +7,7 @@ import crossval as xval
 from sklearn.svm import SVC
 import re
 
-athome = True #use directory on my local computer
+athome = False #use directory on my local computer
 if not athome:
     native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
@@ -90,7 +90,7 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in X:
-                X[pairkey] = np.zeros(4)[np.newaxis,:]
+                X[pairkey] = np.zeros(5)[np.newaxis,:]
                 #X[pairkey][0,1] = np.inf #for min()
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
@@ -112,11 +112,6 @@ nofPositives = int(np.sum(X[:,-1]))
 X = np.concatenate([X[X[:,-1]==1], X[X[:,-1]==0][:nofPositives]], axis=0)
 print("training set shape:", X.shape)
 print("proportion of positives in training set:", X[:,-1].mean())
-
-#crossvalidate and train
-classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
-print('classifier kerneltype:', classifier.kernel)
-print('xval loss (0-1):', classifier.cvloss)
 
 #get a test set
 Xtest = dict()
@@ -140,7 +135,7 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in Xtest:
-                Xtest[pairkey] = np.zeros(4)[np.newaxis,:]
+                Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
                 #Xtest[pairkey][0,1] = np.inf #for min()
             res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
             res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
@@ -158,6 +153,11 @@ for contact in contacts:
         Xtest[(contact[0]+4, contact[1]+4)][0,3] = True #contact
         
 Xtest = np.concatenate([Xtest[x] for x in Xtest], axis=0)
+
+#crossvalidate and train
+classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+print('classifier kerneltype:', classifier.kernel)
+print('xval loss (0-1):', classifier.cvloss)
 
 print("test set shape:", Xtest.shape)
 testPredictions = classifier.predict(Xtest[:,:-1])
