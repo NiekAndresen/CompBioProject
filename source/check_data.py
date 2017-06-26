@@ -24,10 +24,6 @@ count = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
 for chunk in chunks:
     chunkCount += 1
-    for i,row in chunk.iterrows():
-        if row['MatchRank'] > 5:
-            continue
-        else:
-            count += 1
+    count += (chunk['MatchRank'] < 6).sum()
     print("Finished chunk number %3d."%chunkCount)
 print("number of match rank <= 5: %d"%count)
