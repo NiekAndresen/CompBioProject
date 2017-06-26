@@ -14,6 +14,27 @@ else:
     header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
     input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
 
+# For a peptide link map gives three lists:
+# - list of amino acids (1-letter) that might also be matches
+# - list of probabilities that these aas are the match
+# - list of index positions in the protein
+def get_neighborhood_list(linkMap, startIdx):
+    matches = re.findall(r'(\w+(?:-\w+)?)\((\d\.\d{2})\)', linkMap)
+    aaList = []; valList = []; posList = []; origPosList = np.arange(len(matches)); valSum = 0
+    for i,match in enumerate(matches):
+        value = float(match[1])
+        if len(match[0])==1:
+            aaList += [match[0]]
+            valList += [value]
+            posList += [origPosList[i] + startIdx]
+        elif match[0][-1].isupper():
+            aaList += [match[0][-1]]
+            valList += [value]
+            posList += [origPosList[i] + startIdx]
+        valSum += value
+    valList = np.array(valList) / valSum
+    return aaList, valList, posList
+
 pr.init()
 #load native protein
 with open(fasta_fname, 'r') as f:
