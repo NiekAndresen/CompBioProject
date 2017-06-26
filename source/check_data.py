@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pyrosetta as pr
+import re
 
 athome = False #use directory on my local computer
 if not athome:
