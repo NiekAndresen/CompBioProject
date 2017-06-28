@@ -1,0 +1,20 @@
+SDA_HSA_Everything_3.csv:
+    459GB
+    ~200 million rows
+        75% decoys
+SDA_HSA_Everything_reduced.csv:
+    - removed self loops
+    - removed decoys
+    - chose a set of important columns
+    
+    19GB
+    number of rows: 46 mill
+        with rank <= 5: 3 mill (6%)
+    number of unique AA pairs occuring: __
+        with rank <= 5: __ (__%)
+        
+HSA.pdb:
+    578 AAs
+Indexing (everything starting with 1):
+    crosslinks ("20PercentFDR...") -> -28 -> pdb,fasta <- = -> 1ao6A.distances <- -4 <- SDA_HSA_Everything...csv
+    
