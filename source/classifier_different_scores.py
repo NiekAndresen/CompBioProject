@@ -167,4 +167,4 @@ with open(output_fname, 'w') as f:
     f.write("test shape: %d %d\n"%(Xtest.shape[0], Xtest.shape[1]))
     f.write("test set discoveries: %d\n"%int(testPredictions.sum()))
     f.write("cvloss: %f\n"%classifier.cvloss)
-    f.write("FDR: %f\n"%float(testNofFalseDiscoveries)/testNofPosPredicted)
+    f.write("precision: %f\n"%1-float(testNofFalseDiscoveries)/testNofPosPredicted)
