@@ -1,28 +1,24 @@
 import numpy as np
 import pandas as pd
-import pyrosetta as pr
-import matplotlib.pyplot as plt
-import contact_tools_fromMahmoud as ct
 import crossval as xval
 from sklearn.svm import SVC
 import re
 
 athome = False #use directory on my local computer
 if not athome:
-    native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/nieck/CompBioProject/headers/header_different_scores'
+    distance_fname = '/home/nieck/HSA_data/1ao6/1ao6A.distances'
     input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced_different_scores.csv"
-    output_fname = "/home/nieck/HSA_data/results/crossval"
+    output_fname = "/home/nieck/HSA_data/results/diffScores_classifier"
 else:
-    native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
     fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_different_scores'
+    distance_fname = '/home/niek/HSA_data/1ao6/1ao6A.distances'
     input_fname = "/home/niek/HSA_data/data_experiment_1_2_diffScores.csv"
     output_fname = "/home/niek/HSA_data/results/diffScores_classifier"
 
-pr.init()
-#load native protein
+#load fasta
 with open(fasta_fname, 'r') as f:
     native_fasta = ''
     for line in f:
@@ -30,8 +26,15 @@ with open(fasta_fname, 'r') as f:
             continue
         else:
             native_fasta += line.rstrip()
-native = pr.pose_from_pdb(native_fname)
 
+#read native distances
+dist = dict()
+with open(distance_fname, 'r') as d:
+    for line in d:
+        arr = line[:-1].split()
+        dist[(int(arr[0]), int(arr[1]))] = float(arr[2])
+
+#load column names from header
 with open(header_fname, 'r') as hr:
     header = hr.readline()[:-1] #removed \n at the end of line
 columns = []
@@ -41,10 +44,6 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 scorecolumns = ['betaCount', 'mgcScore', 'mgxScore', 'Precoursor Absolute Error', 'FragmentLibraryScore', 'AllScore', 'MatchScore', 'match score']
-#['betaCount', 'mgcScore', 'mgxScore', 'Precoursor Absolute Error', 'MeanSquareError', 'FragmentLibraryScore', 'AllScore', 'MatchScore', 'match score']
-
-#contacts = ct.extract_contacts_from_structure(native_fname)
-#print("contacts:", contacts)
 
 #take a number of rows out of each experiment
 nofSamplesPerChunk = 600#10000
@@ -60,12 +59,14 @@ for chunk in chunks:
             aa2Idx = int(row['ProteinLink2'])
         except ValueError:
             continue
-        if aa1Idx > aa2Idx:
-            aa1Idx,aa2Idx = aa2Idx,aa1Idx#smaller index first for contact list
+        if aa1Idx == aa2Idx:
+            continue
         if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
             continue
-        if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+        if aa1Idx-4 > 578 or aa2Idx-4 > 578:
             continue
+        if aa1Idx>aa2Idx:
+            aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
         ValidColumn = True
         for scorekey in scorecolumns: #check if all scores can be floats
             try:
@@ -78,21 +79,16 @@ for chunk in chunks:
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in X:
             X[pairkey] = np.zeros(3+len(scorecolumns))[np.newaxis,:]
-        res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-        res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         X[pairkey][0,0] += 1 #number of contributing rows
         X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
         for idx, scorekey in enumerate(scorecolumns):
             X[pairkey][0,idx+2] += float(row[scorekey])
-        X[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
+        X[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
 for pairkey in X:
     for idx in range(len(scorecolumns)):
         X[pairkey][0,idx+2] /= X[pairkey][0,0]
-#for contact in contacts:
-#    if (contact[0]+4, contact[1]+4) in X:
-#        X[(contact[0]+4, contact[1]+4)][0,3] = True #contact
 
 X = np.concatenate([X[x] for x in X], axis=0)
 nofPositives = int(np.sum(X[:,-1]))
@@ -118,12 +114,14 @@ for chunk in chunks:
             aa2Idx = int(row['ProteinLink2'])
         except ValueError:
             continue
-        if aa1Idx > aa2Idx:
-            aa1Idx,aa2Idx = aa2Idx,aa1Idx#smaller index first for contact list
+        if aa1Idx == aa2Idx:
+            continue
         if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
             continue
-        if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+        if aa1Idx-4 > 578 or aa2Idx-4 > 578:
             continue
+        if aa1Idx>aa2Idx:
+            aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
         ValidColumn = True
         for scorekey in scorecolumns: #check if all scores can be floats
             try:
@@ -136,21 +134,16 @@ for chunk in chunks:
         pairkey = (aa1Idx, aa2Idx)
         if not pairkey in Xtest:
             Xtest[pairkey] = np.zeros(3+len(scorecolumns))[np.newaxis,:]
-        res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-        res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
         Xtest[pairkey][0,0] += 1 #number of contributing rows
         Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
         for idx, scorekey in enumerate(scorecolumns):
             Xtest[pairkey][0,idx+2] += float(row[scorekey])
-        Xtest[pairkey][0,-1] = res1pos.distance(res2pos) <= 20 #label
+        Xtest[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
 for pairkey in Xtest:
     for idx in range(len(scorecolumns)):
         Xtest[pairkey][0,idx+2] /= Xtest[pairkey][0,0]
-#for contact in contacts:
-#    if (contact[0]+4, contact[1]+4) in Xtest:
-#        Xtest[(contact[0]+4, contact[1]+4)][0,3] = True #contact
         
 Xtest = np.concatenate([Xtest[x] for x in Xtest], axis=0)
 
