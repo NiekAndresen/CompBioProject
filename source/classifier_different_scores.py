@@ -47,7 +47,7 @@ scorecolumns = ['betaCount', 'mgcScore', 'mgxScore', 'Precoursor Absolute Error'
 #print("contacts:", contacts)
 
 #take a number of rows out of each experiment
-nofSamplesPerChunk = 70#10000
+nofSamplesPerChunk = 600#10000
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -162,6 +162,9 @@ testNofPosPredicted = testPredictions.sum()
 testNofFalseDiscoveries = testPredictions[np.logical_and(testPredictions==1, Xtest[:,-1]==0)].sum()
 print("test set FDR:", float(testNofFalseDiscoveries)/testNofPosPredicted)
 with open(output_fname, 'w') as f:
+    f.write("train shape: %d %d\n"%(X.shape[0], X.shape[1]))
     f.write("classifier type: SVM, kernel: %s\n"%(classifier.kernel))
+    f.write("test shape: %d %d\n"%(Xtest.shape[0], Xtest.shape[1]))
     f.write("test set discoveries: %d\n"%int(testPredictions.sum()))
     f.write("cvloss: %f\n"%classifier.cvloss)
+    f.write("FDR: %f\n"%float(testNofFalseDiscoveries)/testNofPosPredicted)
