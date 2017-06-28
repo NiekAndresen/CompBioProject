@@ -41,7 +41,6 @@ with open(distance_fname, 'r') as d:
         dist[(int(arr[0]), int(arr[1]))] = float(arr[2])
 
 trueCount = 0
-trueCount2 = 0
 crosslinkCount = 0
 for aa1Idx,aa2Idx in zip(fromSite, toSite):
     crosslinkCount += 1
@@ -51,17 +50,8 @@ for aa1Idx,aa2Idx in zip(fromSite, toSite):
         continue
     if aa1Idx-offset > native.total_residue() or aa2Idx-offset > native.total_residue():
         continue
-    if aa1Idx==aa2Idx:
-        trueCount += True
-        trueCount2 += True
-        continue
-    if aa1Idx > aa2Idx:
-        aa1Idx,aa2Idx = aa2Idx,aa1Idx
     res1pos = native.residue(aa1Idx-offset).nbr_atom_xyz()
     res2pos = native.residue(aa2Idx-offset).nbr_atom_xyz()
     trueCount += res1pos.distance(res2pos) <= 20
-    trueCount2 += dist[(aa1Idx-offset, aa2Idx-offset)] <= 20
-    #result: the two distance measures are the same
 
 print("precision:", float(trueCount) / crosslinkCount) #for 20% FDR: ~67% are below 20Angstrom
-print("precision:", float(trueCount2) / crosslinkCount) #for 20% FDR: ~67% are below 20Angstrom
