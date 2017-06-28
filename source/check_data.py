@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pyrosetta as pr
 import re
 
 athome = False #use directory on my local computer
@@ -36,7 +35,6 @@ def get_neighborhood_list(linkMap, startIdx):
     valList = np.array(valList) / valSum
     return aaList, valList, posList
 
-pr.init()
 #load native protein
 with open(fasta_fname, 'r') as f:
     native_fasta = ''
@@ -45,7 +43,6 @@ with open(fasta_fname, 'r') as f:
             continue
         else:
             native_fasta += line.rstrip()
-native = pr.pose_from_pdb(native_fname)
 
 with open(header_fname, 'r') as hr:
     header = hr.readline()[:-1] #removed \n at the end of line
@@ -58,7 +55,6 @@ print(columns)
 
 X = set()
 chunkCount = 0
-count = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
 for chunk in chunks:
     chunkCount += 1
@@ -70,7 +66,7 @@ for chunk in chunks:
                 aa2Idx = int(aa2Idx)
                 if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
                     continue
-                if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+                if aa1Idx-4 > 578 or aa2Idx-4 > 578:
                     continue
                 if aa1Idx>aa2Idx:
                     aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
@@ -78,4 +74,4 @@ for chunk in chunks:
                 if not pairkey in X:
                     X.add(pairkey)
     print("Finished chunk number %3d."%chunkCount)
-print("number of different pairs occuring with rank <= 5: %d"%count)
+print("number of different pairs occuring with rank <= 5: %d"%len(X))
