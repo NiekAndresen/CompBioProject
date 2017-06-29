@@ -10,11 +10,19 @@ SDA_HSA_Everything_reduced.csv:
     19GB
     number of rows: 46 mill
         with rank <= 5: 3 mill (6%)
-    number of unique AA pairs occuring: __
-        with rank <= 5: __ (__%)
-        
+    number of unique AA pairs occuring: ___
+        with rank <= 5: 125,000(all seq separations) (__%)
+
+crosslinks ("20PercentFDR..."):
+    after removing decoys:
+    - ~370 0-11 seq sep
+    - ~100 12-23 seq sep
+    - ~600 14-inf seq sep
+
 HSA.pdb:
     578 AAs
 Indexing (everything starting with 1):
     crosslinks ("20PercentFDR...") -> -28 -> pdb,fasta <- = -> 1ao6A.distances <- -4 <- SDA_HSA_Everything...csv
     
+hero to beat:
+    discover ~1400 crosslinks with 60% precision out of 125,000

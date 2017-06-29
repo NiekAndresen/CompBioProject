@@ -53,6 +53,18 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
+##checks several properties that a pair of indices needs to have in order to
+##be taken into account
+def valid_idx_pair(idx1, idx2):
+    result = True
+    if idx1 < 5 or idx2 < 5: #these AAs are not in the .pdb
+        result = False
+    if idx1-4 > 578 or idx2-4 > 578: #these AAs are not in the .pdb
+        result = False
+    if abs(idx1-idx2) < 12: #too low sequence separation
+        result = False
+    return result
+
 X = set()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -64,9 +76,7 @@ for chunk in chunks:
             for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
                 aa1Idx = int(aa1Idx)
                 aa2Idx = int(aa2Idx)
-                if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                    continue
-                if aa1Idx-4 > 578 or aa2Idx-4 > 578:
+                if not valid_idx_pair(aa1Idx, aa2Idx):
                     continue
                 if aa1Idx>aa2Idx:
                     aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
@@ -74,4 +84,4 @@ for chunk in chunks:
                 if not pairkey in X:
                     X.add(pairkey)
     print("Finished chunk number %3d."%chunkCount)
-print("number of different pairs occuring with rank <= 5: %d"%len(X))
+print("number of unique pairs occuring with rank <= 5: %d"%len(X))
