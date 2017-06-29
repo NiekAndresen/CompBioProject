@@ -5,7 +5,7 @@ import crossval as xval
 from sklearn.svm import SVC
 import re
 
-athome = True #use directory on my local computer
+athome = False #use directory on my local computer
 if not athome:
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
@@ -39,6 +39,19 @@ def get_neighborhood_list(linkMap, startIdx):
         valSum += value
     valList = np.array(valList) / valSum
     return aaList, valList, posList
+
+##checks several properties that a pair of indices needs to have in order to
+##be taken into account
+def valid_idx_pair(idx1, idx2):
+    if idx1 < 5 or idx2 < 5: #these AAs are not in the .pdb
+        return False
+    if idx1-4 > 578 or idx2-4 > 578: #these AAs are not in the .pdb
+        return False
+    if abs(idx1-idx2) < 12: #too low sequence separation
+        return False
+    if aa1Idx == aa2Idx:
+        return False
+    return True
 
 #load fasta
 with open(fasta_fname, 'r') as f:
@@ -82,11 +95,7 @@ for chunk in chunks:
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
-            if aa1Idx == aa2Idx:
-                continue
-            if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                continue
-            if aa1Idx-4 > 578 or aa2Idx-4 > 578:
+            if not valid_idx_pair(aa1Idx, aa2Idx):
                 continue
             if aa1Idx>aa2Idx:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
@@ -123,15 +132,10 @@ for chunk in chunks:
             continue
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        #print("ye", aa1List[i], native.residue_type(int(pos1List[i]-4)).name1())
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
-            if aa1Idx == aa2Idx:
-                continue
-            if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
-                continue
-            if aa1Idx-4 > 578 or aa2Idx-4 > 578:
+            if not valid_idx_pair(aa1Idx, aa2Idx):
                 continue
             if aa1Idx>aa2Idx:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
@@ -162,7 +166,7 @@ testPredictions = classifier.predict(Xtest[:,:-1])
 print("proportion of positives in test set:", Xtest[:,-1].mean())
 print("test set discoveries:", testPredictions.sum())
 testNofPosPredicted = testPredictions.sum()
-testNofFalseDiscoveries = testPredictions[np.logical_and(testPredictions==1, Xtest[:,-1]==0)].sum()
+testNofFalseDiscoveries = testPredictions[Xtest[:,-1]==0].sum()
 print("test set FDR:", float(testNofFalseDiscoveries)/testNofPosPredicted)
 with open(output_fname, 'w') as f:
     f.write("training set shape: %d %d\n"%(X.shape[0], X.shape[1]))
@@ -170,4 +174,4 @@ with open(output_fname, 'w') as f:
     f.write("test set shape: %d %d\n"%(Xtest.shape[0], Xtest.shape[1]))
     f.write("test set discoveries: %d\n"%int(testPredictions.sum()))
     f.write("cvloss: %f\n"%classifier.cvloss)
-    f.write("precision: %f\n"%1-float(testNofFalseDiscoveries)/testNofPosPredicted)
+    f.write("precision: %f\n"%(1-float(testNofFalseDiscoveries)/testNofPosPredicted))
