@@ -5,7 +5,7 @@ import crossval as xval
 from sklearn.svm import SVC
 import re
 
-athome = True #use directory on my local computer
+athome = False #use directory on my local computer
 if not athome:
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
@@ -80,14 +80,12 @@ columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
 #take a number of rows out of each experiment
-nofSamplesPerChunk = 5000#10000
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
 for chunk in chunks:
     chunkCount += 1
-    rows = chunk.sample(n=nofSamplesPerChunk)
-    for i,row in rows.iterrows():
+    for i,row in chunk.iterrows():
         if row['MatchRank'] > 5:
             continue
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
@@ -114,15 +112,20 @@ for chunk in chunks:
 for pairkey in X: #make score to average score
     X[pairkey][0,4] /= X[pairkey][0,0]
 
-X = np.concatenate([X[x] for x in X], axis=0)
-nofPositives = int(np.sum(X[:,-1]))
-X = np.concatenate([X[X[:,-1]==1], X[X[:,-1]==0][:nofPositives]], axis=0)
-print("training set shape:", X.shape)
-print("proportion of positives in training set:", X[:,-1].mean())
+#chose training set
+trainingSetSize = 20000
+trainIdx = np.random.choice(np.arange(len(X)), min(trainingSetSize,len(X)))
+Xtrain = np.concatenate([ X[x] for x in [list(X.keys())[i] for i in trainIdx] ], axis=0)
+nofPositives = int(np.sum(Xtrain[:,-1]))
+Xtrain = np.concatenate([Xtrain[Xtrain[:,-1]==1], Xtrain[Xtrain[:,-1]==0][:nofPositives]], axis=0)
+print("training set shape:", Xtrain.shape)
+print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
 #crossvalidate and train
-classifier = xval.cv(X[:,:-1], X[:,-1], SVC, {'kernel':['linear', 'rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear', 'rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 
+#go through everything. In each scan take the ones with rank <=5 and let the classifier classify on the data stored in X about this pair.
+#take the pairs as winners that win in each scan
 winners = list()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -140,7 +143,7 @@ for chunk in chunks:
             if val1List[i] * val2List[i] < .05: #very unlikely
                 continue
             if not row['Scan'] in experiments[row['Run']]:
-                experiments[row['Run']][row['Scan']] = dict()
+                experiments[row['Run']][row['Scan']] = list()
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
             if not valid_idx_pair(aa1Idx, aa2Idx):
@@ -148,34 +151,26 @@ for chunk in chunks:
             if aa1Idx>aa2Idx:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
-    ##whole thing doesnt work as I would need to keep the data for the whole dataset in memory and then go through the scans etc and predict
-    ##will try if it is possible to keep the whole thing in memory and not only the training or test set.
-            if not pairkey in experiments[row['Run']]:
-                experiments[row['Run']][row['Scan']][pairkey] = np.zeros(6)[np.newaxis,:]
-                experiments[row['Run']][row['Scan']][pairkey][0,2] = np.inf #for min()
-            experiments[row['Run']][row['Scan']][pairkey][0,0] += 1 #number of contributing entries
-            experiments[row['Run']][row['Scan']][pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
-            experiments[row['Run']][row['Scan']][pairkey][0,2] = min(experiments[row['Run']][row['Scan']][pairkey][0,1], row['MatchRank']) #minimum rank encoutered
-            experiments[row['Run']][row['Scan']][pairkey][0,3] += row['match score'] * val1List[i] * val2List[i] #weighted score
-            experiments[row['Run']][row['Scan']][pairkey][0,4] += row['match score'] #score
-            experiments[row['Run']][row['Scan']][pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
-        for ex in experiments:
-            for scan in experiments[ex]:
-                if(len(experiments[ex][scan]) == 0):
-                    continue
-                pairs = list(experiments[ex][scan].keys())
-                Xex = np.concatenate([experiments[ex][scan][x] for x in experiments[ex][scan]], axis=0)
-                exPred = classifier.decision_function(Xex[:,:-1])
-                maxPred = np.argmax(exPred)
-                winners += [(pairs[maxPred], experiments[ex][scan][pairs[maxPred]][0,-1])]
+            if not pairkey in experiments[row['Run']][row['Scan']]:
+                experiments[row['Run']][row['Scan']] += [pairkey]
+    for ex in experiments:
+        for scan in experiments[ex]:
+            if(len(experiments[ex][scan]) == 0):
+                continue
+            pairs = experiments[ex][scan]
+            Xex = np.concatenate([X[pair] for pair in pairs], axis=0)
+            exPred = classifier.decision_function(Xex[:,:-1])
+            maxPred = np.argmax(exPred)
+            winners += [(pairs[maxPred], X[pairs[maxPred]][0,-1])]
     print("Finished chunk number %3d."%chunkCount)
 correctMatchesCount = 0
 matchesCount = 0
 for winner in winners:
     matchesCount += 1
     correctMatchesCount += winner[1]
-    print(winner[1])
+print("scans precision: %f"%(float(correctMatchesCount)/matchesCount))
 
+nofSamplesPerChunk = 500
 #get a test set
 Xtest = dict()
 chunkCount = 0
@@ -222,13 +217,13 @@ testNofPosPredicted = testPredictions.sum()
 testNofFalseDiscoveries = testPredictions[Xtest[:,-1]==0].sum()
 print("test set FDR:", float(testNofFalseDiscoveries)/testNofPosPredicted)
 with open(output_fname, 'w') as f:
-    f.write("CLASSIFIER WEIGHT SCANS")
-    f.write("training set shape: %d %d\n"%(X.shape[0], X.shape[1]))
+    f.write("CLASSIFIER WEIGHT SCANS\n")
+    f.write("training set shape: %d %d\n"%(Xtrain.shape[0], Xtrain.shape[1]))
     f.write("classifier type: SVM, kernel: %s\n"%(classifier.kernel))
     f.write("test set shape: %d %d\n"%(Xtest.shape[0], Xtest.shape[1]))
     f.write("test set discoveries: %d\n"%int(testPredictions.sum()))
     f.write("cvloss: %f\n"%classifier.cvloss)
     f.write("test precision: %f\n"%(1-float(testNofFalseDiscoveries)/testNofPosPredicted))
     f.write("\nmatches found: %d\n"%matchesCount)
-    f.write("precision: %f\n"%float(correctMatchesCount)/matchesCount)
+    f.write("precision: %f\n"%(float(correctMatchesCount)/matchesCount))
 
