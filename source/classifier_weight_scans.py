@@ -161,13 +161,18 @@ for chunk in chunks:
             Xex = np.concatenate([X[pair] for pair in pairs], axis=0)
             exPred = classifier.decision_function(Xex[:,:-1])
             maxPred = np.argmax(exPred)
-            winners += [(pairs[maxPred], X[pairs[maxPred]][0,-1])]
+            winners += [(pairs[maxPred], exPred[maxPred], X[pairs[maxPred]][0,-1])]
     print("Finished chunk number %3d."%chunkCount)
+
+#chose the 2000 best winners
+nOfWinnersChosen = min(1400, len(winners))
+preds = [tup[1] for tup in winners]
+bestWinners = [winners[i] for i in np.argpartition(preds, nOfWinnersChosen)[-nOfWinnersChosen:]]
 correctMatchesCount = 0
 matchesCount = 0
-for winner in winners:
+for winner in bestWinners:
     matchesCount += 1
-    correctMatchesCount += winner[1]
+    correctMatchesCount += winner[2]
 print("scans precision: %f"%(float(correctMatchesCount)/matchesCount))
 
 nofSamplesPerChunk = 500
@@ -216,6 +221,8 @@ print("test set discoveries:", testPredictions.sum())
 testNofPosPredicted = testPredictions.sum()
 testNofFalseDiscoveries = testPredictions[Xtest[:,-1]==0].sum()
 print("test set FDR:", float(testNofFalseDiscoveries)/testNofPosPredicted)
+print("precision best winners: %f\n"%(float(correctMatchesCount)/matchesCount))
+print("len(X): %d"%len(X))
 with open(output_fname, 'w') as f:
     f.write("CLASSIFIER WEIGHT SCANS\n")
     f.write("training set shape: %d %d\n"%(Xtrain.shape[0], Xtrain.shape[1]))
