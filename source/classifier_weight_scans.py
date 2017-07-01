@@ -91,6 +91,8 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
+            if val1List[i] * val2List[i] < .1: #very unlikely
+                continue
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
             if not valid_idx_pair(aa1Idx, aa2Idx):
@@ -99,18 +101,14 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in X:
-                X[pairkey] = np.zeros(6)[np.newaxis,:]
+                X[pairkey] = np.zeros(5)[np.newaxis,:]
                 X[pairkey][0,2] = np.inf #for min()
-            X[pairkey][0,0] += 1 #number of contributing entries
-            X[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
+            X[pairkey][0,0] += val1List[i] * val2List[i] #weighted number of contributing entries
+            X[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[i] #rank score
             X[pairkey][0,2] = min(X[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
             X[pairkey][0,3] += row['match score'] * val1List[i] * val2List[i] #weighted score
-            X[pairkey][0,4] += row['match score'] #score
             X[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
-
-for pairkey in X: #make score to average score
-    X[pairkey][0,4] /= X[pairkey][0,0]
 
 #chose training set
 trainingSetSize = 32000
@@ -122,7 +120,7 @@ print("training set shape:", Xtrain.shape)
 print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
 #crossvalidate and train
-classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear', 'rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 
 #go through everything. In each scan take the ones with rank <=5 and let the classifier classify on the data stored in X about this pair.
 #take the pairs as winners that win in each scan
@@ -140,7 +138,7 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .05: #very unlikely
+            if val1List[i] * val2List[i] < .1: #very unlikely
                 continue
             if not row['Scan'] in experiments[row['Run']]:
                 experiments[row['Run']][row['Scan']] = list()
@@ -164,7 +162,7 @@ for chunk in chunks:
             winners += [(pairs[maxPred], exPred[maxPred], X[pairs[maxPred]][0,-1])]
     print("Finished chunk number %3d."%chunkCount)
 
-#chose the 2000 best winners
+#chose the 1400 best winners
 nOfWinnersChosen = min(1400, len(winners))
 preds = [tup[1] for tup in winners]
 bestWinners = [winners[i] for i in np.argpartition(preds, nOfWinnersChosen)[-nOfWinnersChosen:]]
@@ -189,6 +187,8 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
+            if val1List[i] * val2List[i] < .1: #very unlikely
+                continue
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
             if not valid_idx_pair(aa1Idx, aa2Idx):
@@ -197,19 +197,15 @@ for chunk in chunks:
                 aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
             pairkey = (aa1Idx, aa2Idx)
             if not pairkey in Xtest:
-                Xtest[pairkey] = np.zeros(6)[np.newaxis,:]
+                Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
                 Xtest[pairkey][0,2] = np.inf #for min()
-            Xtest[pairkey][0,0] += 1 #number of contributing entries
-            Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) #rank score
+            Xtest[pairkey][0,0] += val1List[i] * val2List[i] #weighted number of contributing entries
+            Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[i] #rank score
             Xtest[pairkey][0,2] = min(Xtest[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
             Xtest[pairkey][0,3] += row['match score'] * val1List[i] * val2List[i] #weighted score
-            Xtest[pairkey][0,4] += row['match score'] #score
             Xtest[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-for pairkey in Xtest: #make score to average score
-    Xtest[pairkey][0,4] /= Xtest[pairkey][0,0]
-        
 Xtest = np.concatenate([Xtest[x] for x in Xtest], axis=0)
 
 print('classifier kerneltype:', classifier.kernel)
