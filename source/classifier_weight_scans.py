@@ -47,8 +47,8 @@ def valid_idx_pair(idx1, idx2):
         return False
     if idx1-4 > 578 or idx2-4 > 578: #these AAs are not in the .pdb
         return False
-    if abs(idx1-idx2) < 12: #too low sequence separation
-        return False
+    #if abs(idx1-idx2) < 12: #too low sequence separation
+    #    return False
     if aa1Idx == aa2Idx:
         return False
     return True
