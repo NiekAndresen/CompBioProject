@@ -113,7 +113,7 @@ for pairkey in X: #make score to average score
     X[pairkey][0,4] /= X[pairkey][0,0]
 
 #chose training set
-trainingSetSize = 20000
+trainingSetSize = 32000
 trainIdx = np.random.choice(np.arange(len(X)), min(trainingSetSize,len(X)))
 Xtrain = np.concatenate([ X[x] for x in [list(X.keys())[i] for i in trainIdx] ], axis=0)
 nofPositives = int(np.sum(Xtrain[:,-1]))
