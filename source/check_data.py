@@ -76,7 +76,7 @@ for chunk in chunks:
             aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
             for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
                 if val1List[i] * val2List[i] < .1: #very unlikely
-                continue
+                    continue
                 aa1Idx = int(aa1Idx)
                 aa2Idx = int(aa2Idx)
                 if not valid_idx_pair(aa1Idx, aa2Idx):
