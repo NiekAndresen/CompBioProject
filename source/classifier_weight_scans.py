@@ -49,7 +49,7 @@ def valid_idx_pair(idx1, idx2):
         return False
     #if abs(idx1-idx2) < 12: #too low sequence separation
     #    return False
-    if aa1Idx == aa2Idx:
+    if idx1 == idx2:
         return False
     return True
 
@@ -115,7 +115,7 @@ trainingSetSize = 32000
 trainIdx = np.random.choice(np.arange(len(X)), min(trainingSetSize,len(X)))
 Xtrain = np.concatenate([ X[x] for x in [list(X.keys())[i] for i in trainIdx] ], axis=0)
 nofPositives = int(np.sum(Xtrain[:,-1]))
-Xtrain = np.concatenate([Xtrain[Xtrain[:,-1]==1], Xtrain[Xtrain[:,-1]==0][:nofPositives]], axis=0)
+#Xtrain = np.concatenate([Xtrain[Xtrain[:,-1]==1], Xtrain[Xtrain[:,-1]==0][:nofPositives]], axis=0)
 print("training set shape:", Xtrain.shape)
 print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
