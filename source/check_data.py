@@ -56,14 +56,15 @@ print(columns)
 ##checks several properties that a pair of indices needs to have in order to
 ##be taken into account
 def valid_idx_pair(idx1, idx2):
-    result = True
     if idx1 < 5 or idx2 < 5: #these AAs are not in the .pdb
-        result = False
+        return False
     if idx1-4 > 578 or idx2-4 > 578: #these AAs are not in the .pdb
-        result = False
-    if abs(idx1-idx2) < 12: #too low sequence separation
-        result = False
-    return result
+        return False
+    #if abs(idx1-idx2) < 12: #too low sequence separation
+    #    return False
+    if idx1 == idx2:
+        return False
+    return True
 
 X = set()
 chunkCount = 0
@@ -74,6 +75,8 @@ for chunk in chunks:
             aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
             aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
             for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
+                if val1List[i] * val2List[i] < .1: #very unlikely
+                continue
                 aa1Idx = int(aa1Idx)
                 aa2Idx = int(aa2Idx)
                 if not valid_idx_pair(aa1Idx, aa2Idx):
