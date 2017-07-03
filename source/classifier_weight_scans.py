@@ -91,7 +91,7 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .1: #very unlikely
+            if val1List[i] * val2List[i] < .04: #very unlikely
                 continue
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
@@ -111,11 +111,11 @@ for chunk in chunks:
     print("Finished chunk number %3d."%chunkCount)
 
 #chose training set
-trainingSetSize = 32000
+trainingSetSize = 15000
 trainIdx = np.random.choice(np.arange(len(X)), min(trainingSetSize,len(X)))
 Xtrain = np.concatenate([ X[x] for x in [list(X.keys())[i] for i in trainIdx] ], axis=0)
 nofPositives = int(np.sum(Xtrain[:,-1]))
-#Xtrain = np.concatenate([Xtrain[Xtrain[:,-1]==1], Xtrain[Xtrain[:,-1]==0][:nofPositives]], axis=0)
+#Xtrain = np.concatenate([Xtrain[Xtrain[:,-1]==1], Xtrain[Xtrain[:,-1]==0][:nofPositives]], axis=0) #balance training set
 print("training set shape:", Xtrain.shape)
 print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
@@ -138,7 +138,7 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .1: #very unlikely
+            if val1List[i] * val2List[i] < .04: #very unlikely
                 continue
             if not row['Scan'] in experiments[row['Run']]:
                 experiments[row['Run']][row['Scan']] = list()
@@ -187,7 +187,7 @@ for chunk in chunks:
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .1: #very unlikely
+            if val1List[i] * val2List[i] < .04: #very unlikely
                 continue
             aa1Idx = int(aa1Idx)
             aa2Idx = int(aa2Idx)
