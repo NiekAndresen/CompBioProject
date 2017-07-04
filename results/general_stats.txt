@@ -12,7 +12,9 @@ SDA_HSA_Everything_reduced.csv:
         with rank <= 5: 3 mill (6%)
     number of unique AA pairs occuring: ___
         with rank <= 5: 120,000(>= 12 seq sep, also very unlikely) (__%)
-        with rank <= 5, all seq sep, p>0.1: 7000
+        with rank <= 5, all seq sep, p>0.1: 7000 (p>0.1 is a bad choice, better p>0.04) (this number is wrong, contained neighborhood bug)
+    precision of rank
+        1: 35.83% 2: 27.90% 3: 26.31% 4: 25.71% 5: 24.71%, 6: 23.81% 7: 23.54% 8: 22.96% 9: 22.59% rest: 17.74%
 
 crosslinks ("20PercentFDR..."):
     after removing decoys:
