@@ -90,24 +90,25 @@ for chunk in chunks:
             continue
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .04: #very unlikely
-                continue
-            aa1Idx = int(aa1Idx)
-            aa2Idx = int(aa2Idx)
-            if not valid_idx_pair(aa1Idx, aa2Idx):
-                continue
-            if aa1Idx>aa2Idx:
-                aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-            pairkey = (aa1Idx, aa2Idx)
-            if not pairkey in X:
-                X[pairkey] = np.zeros(5)[np.newaxis,:]
-                X[pairkey][0,2] = np.inf #for min()
-            X[pairkey][0,0] += val1List[i] * val2List[i] #weighted number of contributing entries
-            X[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[i] #rank score
-            X[pairkey][0,2] = min(X[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
-            X[pairkey][0,3] += row['match score'] * val1List[i] * val2List[i] #weighted score
-            X[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
+        for i,aa1Idx in enumerate(pos1List):
+            for j,aa2Idx in enumerate(pos2List):
+                if val1List[i] * val2List[j] < .04: #very unlikely
+                    continue
+                aa1Idx = int(aa1Idx)
+                aa2Idx = int(aa2Idx)
+                if not valid_idx_pair(aa1Idx, aa2Idx):
+                    continue
+                if aa1Idx>aa2Idx:
+                    aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
+                pairkey = (aa1Idx, aa2Idx)
+                if not pairkey in X:
+                    X[pairkey] = np.zeros(5)[np.newaxis,:]
+                    X[pairkey][0,2] = np.inf #for min()
+                X[pairkey][0,0] += val1List[i] * val2List[j] #weighted number of contributing entries
+                X[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[j] #rank score
+                X[pairkey][0,2] = min(X[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
+                X[pairkey][0,3] += row['match score'] * val1List[i] * val2List[j] #weighted score
+                X[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
 #chose training set
@@ -137,20 +138,21 @@ for chunk in chunks:
             experiments[row['Run']] = dict()
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .04: #very unlikely
-                continue
-            if not row['Scan'] in experiments[row['Run']]:
-                experiments[row['Run']][row['Scan']] = list()
-            aa1Idx = int(aa1Idx)
-            aa2Idx = int(aa2Idx)
-            if not valid_idx_pair(aa1Idx, aa2Idx):
-                continue
-            if aa1Idx>aa2Idx:
-                aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-            pairkey = (aa1Idx, aa2Idx)
-            if not pairkey in experiments[row['Run']][row['Scan']]:
-                experiments[row['Run']][row['Scan']] += [pairkey]
+        for i,aa1Idx in enumerate(pos1List):
+            for j,aa2Idx in enumerate(pos2List):
+                if val1List[i] * val2List[j] < .04: #very unlikely
+                    continue
+                if not row['Scan'] in experiments[row['Run']]:
+                    experiments[row['Run']][row['Scan']] = list()
+                aa1Idx = int(aa1Idx)
+                aa2Idx = int(aa2Idx)
+                if not valid_idx_pair(aa1Idx, aa2Idx):
+                    continue
+                if aa1Idx>aa2Idx:
+                    aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
+                pairkey = (aa1Idx, aa2Idx)
+                if not pairkey in experiments[row['Run']][row['Scan']]:
+                    experiments[row['Run']][row['Scan']] += [pairkey]
     for ex in experiments:
         for scan in experiments[ex]:
             if(len(experiments[ex][scan]) == 0):
@@ -186,24 +188,25 @@ for chunk in chunks:
             continue
         aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        for i, aa1Idx, aa2Idx in zip(range(len(pos1List)), pos1List, pos2List):
-            if val1List[i] * val2List[i] < .04: #very unlikely
-                continue
-            aa1Idx = int(aa1Idx)
-            aa2Idx = int(aa2Idx)
-            if not valid_idx_pair(aa1Idx, aa2Idx):
-                continue
-            if aa1Idx>aa2Idx:
-                aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-            pairkey = (aa1Idx, aa2Idx)
-            if not pairkey in Xtest:
-                Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
-                Xtest[pairkey][0,2] = np.inf #for min()
-            Xtest[pairkey][0,0] += val1List[i] * val2List[i] #weighted number of contributing entries
-            Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[i] #rank score
-            Xtest[pairkey][0,2] = min(Xtest[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
-            Xtest[pairkey][0,3] += row['match score'] * val1List[i] * val2List[i] #weighted score
-            Xtest[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
+        for i,aa1Idx in enumerate(pos1List):
+            for j,aa2Idx in enumerate(pos2List):
+                if val1List[i] * val2List[j] < .04: #very unlikely
+                    continue
+                aa1Idx = int(aa1Idx)
+                aa2Idx = int(aa2Idx)
+                if not valid_idx_pair(aa1Idx, aa2Idx):
+                    continue
+                if aa1Idx>aa2Idx:
+                    aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
+                pairkey = (aa1Idx, aa2Idx)
+                if not pairkey in Xtest:
+                    Xtest[pairkey] = np.zeros(5)[np.newaxis,:]
+                    Xtest[pairkey][0,2] = np.inf #for min()
+                Xtest[pairkey][0,0] += val1List[i] * val2List[j] #weighted number of contributing entries
+                Xtest[pairkey][0,1] += 1/(row['MatchRank']**2) * val1List[i] * val2List[j] #rank score
+                Xtest[pairkey][0,2] = min(Xtest[pairkey][0,1], row['MatchRank']) #minimum rank encoutered
+                Xtest[pairkey][0,3] += row['match score'] * val1List[i] * val2List[j] #weighted score
+                Xtest[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
 Xtest = np.concatenate([Xtest[x] for x in Xtest], axis=0)
