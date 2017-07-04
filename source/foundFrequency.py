@@ -6,13 +6,13 @@ import re
 athome = False
 if athome:
     fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-    header_fname = '/home/niek/HSA_data/header_reduced'
+    header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
     input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
     distance_fname = "/home/niek/HSA_data/1ao6/1ao6A.distances"
     output_fname = '/home/niek/HSA_data/results/foundFrequency'
 else:
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-    header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
+    header_fname = '/home/nieck/Computational Biology/CompBioProject/headers/header_reduced'
     input_fname = "/home/nieck/HSA_data/data_experiment_1_2_reduced.csv"
     distance_fname = '/home/nieck/HSA_data/1ao6/1ao6A.distances'
     output_fname = '/home/nieck/HSA_data/results/foundFrequency'
