@@ -13,7 +13,7 @@ if athome:
 else:
     fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
-    input_fname = "/home/nieck/HSA_data/data_experiment_1_2_reduced.csv"
+    input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
     distance_fname = '/home/nieck/HSA_data/1ao6/1ao6A.distances'
     output_fname = '/home/nieck/HSA_data/results/foundFrequency'
 
