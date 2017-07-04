@@ -92,7 +92,7 @@ for chunk in chunks:
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i,aa1Idx in enumerate(pos1List):
             for j,aa2Idx in enumerate(pos2List):
-                if val1List[i] * val2List[j] < .04: #very unlikely
+                if val1List[i] * val2List[j] < .01: #very unlikely
                     continue
                 aa1Idx = int(aa1Idx)
                 aa2Idx = int(aa2Idx)
@@ -140,7 +140,7 @@ for chunk in chunks:
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i,aa1Idx in enumerate(pos1List):
             for j,aa2Idx in enumerate(pos2List):
-                if val1List[i] * val2List[j] < .04: #very unlikely
+                if val1List[i] * val2List[j] < .01: #very unlikely
                     continue
                 if not row['Scan'] in experiments[row['Run']]:
                     experiments[row['Run']][row['Scan']] = list()
@@ -190,7 +190,7 @@ for chunk in chunks:
         aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
         for i,aa1Idx in enumerate(pos1List):
             for j,aa2Idx in enumerate(pos2List):
-                if val1List[i] * val2List[j] < .04: #very unlikely
+                if val1List[i] * val2List[j] < .01: #very unlikely
                     continue
                 aa1Idx = int(aa1Idx)
                 aa2Idx = int(aa2Idx)
