@@ -1,24 +1,24 @@
 
 import pandas as pd
 import numpy as np
-import pyrosetta as pr
 
-native_fname = '/home/nieck/HSA_data/1ao6/1ao6A.pdb'
-fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
-occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
-input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-output_fname = "/home/nieck/HSA_data/results/everything_statistics"
+athome = True
+if not athome:
+    fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+    header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
+    occuring_experiments_fname = "/home/nieck/HSA_data/run_identifiers_everything"
+    input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+    output_fname = "/home/nieck/HSA_data/results/everything_statistics"
+    distance_fname = '/home/nieck/HSA_data/1ao6/1ao6A.distances'
+else:
+    fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
+    header_fname = '/home/niek/HSA_data/header_reduced'
+    occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
+    input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
+    output_fname = "/home/niek/HSA_data/results/ex_1_2_statistics"
+    distance_fname = "/home/niek/HSA_data/1ao6/1ao6A.distances'
 
-#native_fname = '/home/niek/HSA_data/1ao6/1ao6A.pdb'
-#fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-#header_fname = '/home/niek/HSA_data/header_reduced'
-#occuring_experiments_fname = "/home/niek/HSA_data/run_identifiers_1_2"
-#input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
-#output_fname = "/home/niek/HSA_data/results/ex_1_2_statistics"
-
-pr.init()
-#load native protein
+#load native fasta
 with open(fasta_fname, 'r') as f:
     native_fasta = ''
     for line in f:
@@ -26,7 +26,13 @@ with open(fasta_fname, 'r') as f:
             continue
         else:
             native_fasta += line.rstrip()
-native = pr.pose_from_pdb(native_fname)
+
+#read native distances
+dist = dict()
+with open(distance_fname, 'r') as d:
+    for line in d:
+        arr = line[:-1].split()
+        dist[(int(arr[0]), int(arr[1]))] = float(arr[2])
 
 with open(header_fname, 'r') as hr:
     header = hr.readline()[:-1] #removed \n at the end of line
@@ -125,11 +131,9 @@ for ex in runs:
                 continue
             if aa1Idx < 5 or aa2Idx < 5: #these AAs are not in the .pdb
                 continue
-            if aa1Idx-4 > native.total_residue() or aa2Idx-4 > native.total_residue():
+            if aa1Idx-4 > 578 or aa2Idx-4 > 578:
                 continue
-            res1pos = native.residue(aa1Idx-4).nbr_atom_xyz()
-            res2pos = native.residue(aa2Idx-4).nbr_atom_xyz()
-            realdist = res1pos.distance(res2pos)
+            realdist = dist[(aa1Idx-4, aa2Idx-4)]
             #scans[row['Scan']] += [(row['match score'], realdist)]
             scans[row['Scan']] += [(realdist, row['MatchRank'])]
     for scan in scans.keys():
