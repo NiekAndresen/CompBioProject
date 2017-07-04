@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 
-athome = True
+athome = False
 if athome:
     fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
     header_fname = '/home/niek/HSA_data/header_reduced'
