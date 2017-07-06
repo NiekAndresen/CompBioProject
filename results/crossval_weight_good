@@ -1,0 +1,10 @@
+CLASSIFIER WEIGHT SCANS
+training set shape: 15000 5
+classifier type: SVM, kernel: rbf
+test set shape: 16593 5
+test set discoveries: 21
+cvloss: 0.168500
+test precision: 0.857143
+
+matches found: 1400
+precision: 0.934286
