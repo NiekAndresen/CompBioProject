@@ -1,10 +1,9 @@
 ##Niek Andresen for Computational Biology Project Summer Term 2017
 
 # GIVE PATHS:
-fasta_fname = "/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta"
-header_fname = "/home/nieck/CompBioProject/headers/header_reduced"
+header_fname = "./header_reduced"
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-distance_fname = "/home/nieck/HSA_data/1ao6/1ao6A.distances"
+distance_fname = "./1ao6A.distances"
 output_fname = "/home/nieck/HSA_data/results/crossval_weightscans"
 
 import numpy as np
@@ -46,15 +45,6 @@ def valid_idx_pair(idx1, idx2):
     if idx1 == idx2:
         return False
     return True
-
-#load fasta
-with open(fasta_fname, 'r') as f:
-    native_fasta = ''
-    for line in f:
-        if line.startswith('>'):
-            continue
-        else:
-            native_fasta += line.rstrip()
             
 #read native distances
 dist = dict()
@@ -133,6 +123,7 @@ for winner in winners:
     matchesCount += 1
     correctMatchesCount += winner[2]
 
+# output
 print('classifier kerneltype:', classifier.kernel)
 print('xval loss (0-1):', classifier.cvloss)
 print("precision best winners: %f\n"%(float(correctMatchesCount)/matchesCount))
