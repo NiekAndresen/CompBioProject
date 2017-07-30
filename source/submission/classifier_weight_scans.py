@@ -1,29 +1,21 @@
 ##Niek Andresen for Computational Biology Project Summer Term 2017
 
+# GIVE PATHS:
+fasta_fname = "/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta"
+header_fname = "/home/nieck/CompBioProject/headers/header_reduced"
+input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
+distance_fname = "/home/nieck/HSA_data/1ao6/1ao6A.distances"
+output_fname = "/home/nieck/HSA_data/results/crossval_weightscans"
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import crossval as xval
 from sklearn.svm import SVC
 import re
 
-athome = False #use directory on my local computer
-if not athome:
-    fasta_fname = '/home/nieck/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-    header_fname = '/home/nieck/CompBioProject/headers/header_reduced'
-    input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
-    distance_fname = '/home/nieck/HSA_data/1ao6/1ao6A.distances'
-    output_fname = "/home/nieck/HSA_data/results/crossval_weightscans"
-else:
-    fasta_fname = '/home/niek/HSA_data/1ao6/1ao6A_reconstructed.fasta'
-    header_fname = '/home/niek/Computational Biology/CompBioProject/headers/header_reduced'
-    distance_fname = '/home/niek/HSA_data/1ao6/1ao6A.distances'
-    input_fname = "/home/niek/HSA_data/data_experiment_1_2_reduced.csv"
-    output_fname = "/home/niek/HSA_data/results/crossval_weightscans"
-
 # For a peptide link map gives three lists:
 # - list of amino acids (1-letter) that might also be matches
-# - list of probabilities that these aas are the match
+# - list of probabilities that these aas are the match (normalized)
 # - list of index positions in the protein
 def get_neighborhood_list(linkMap, startIdx):
     matches = re.findall(r'(\w+(?:-\w+)?)\((\d\.\d{2})\)', linkMap)
@@ -123,16 +115,15 @@ print("training set shape:", Xtrain.shape)
 print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
 #crossvalidate and train
-classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear','rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 
 #go through everything. In each scan take the ones with rank <=5 and let the classifier classify on the data stored in X about this pair.
 #take the pairs as winners that win in each scan
-winners = list()
 chunkCount = 0
+experiments = {}
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
 for chunk in chunks:
     chunkCount += 1
-    experiments = dict()
     for i,row in chunk.iterrows():
         if row['MatchRank'] > 5:
             continue
@@ -155,27 +146,28 @@ for chunk in chunks:
                 pairkey = (aa1Idx, aa2Idx)
                 if not pairkey in experiments[row['Run']][row['Scan']]:
                     experiments[row['Run']][row['Scan']] += [pairkey]
-    for ex in experiments:
-        for scan in experiments[ex]:
-            if(len(experiments[ex][scan]) == 0):
-                continue
-            pairs = experiments[ex][scan]
-            Xex = np.concatenate([X[pair] for pair in pairs], axis=0)
-            exPred = classifier.decision_function(Xex[:,:-1])
-            maxPred = np.argmax(exPred)
-            winners += [(pairs[maxPred], exPred[maxPred], X[pairs[maxPred]][0,-1])]
     print("Finished chunk number %3d."%chunkCount)
 
-#chose the 1400 best winners
+# put everything together in one list to then predict it all
+pairs = []
+for ex in experiments:
+    for scan in experiments[ex]:
+        if(len(experiments[ex][scan]) == 0):
+            continue
+        pairs += experiments[ex][scan]
+Xex = [X[pair] for pair in pairs]
+exPred = classifier.decision_function(Xex[:,:-1])
+# chose 1400 best winners
 nOfWinnersChosen = min(1400, len(winners))
-preds = [tup[1] for tup in winners]
-bestWinners = [winners[i] for i in np.argpartition(preds, nOfWinnersChosen)[-nOfWinnersChosen:]]
+winners = np.argpartition(exPred, nofWinnersChosen)[-nOfWinnersChosen:]
+# list of (idx pair, prediction, label) for each of the best predictions
+winners = [(pairs[winner], exPred[winner], X[pairs[winner]][0,-1]) for winner in winners]
+
 correctMatchesCount = 0
 matchesCount = 0
-for winner in bestWinners:
+for winner in winners:
     matchesCount += 1
     correctMatchesCount += winner[2]
-print("scans precision: %f"%(float(correctMatchesCount)/matchesCount))
 
 nofSamplesPerChunk = 500
 #get a test set
