@@ -1,7 +1,7 @@
 ##Niek Andresen for Computational Biology Project Summer Term 2017
 
 # GIVE PATHS:
-header_fname = "./header_reduced"
+header_fname = "./header_reduced.csv"
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
 distance_fname = "./1ao6A.distances"
 output_fname = "/home/nieck/HSA_data/results/crossval_weightscans"
