@@ -1,7 +1,9 @@
 ##Niek Andresen for Computational Biology Project Summer Term 2017
 
+# This script trains and tests the classifier as described in the report.
+# It requires the native distances in a file.
+
 # GIVE PATHS:
-header_fname = "./header_reduced.csv"
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
 distance_fname = "./1ao6A.distances"
 output_fname = "/home/nieck/HSA_data/results/crossval_weightscans"
@@ -66,7 +68,7 @@ print(columns)
 # accumulate data about all occuring pairs of AAs in X
 X = dict()
 chunkCount = 0
-chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
+chunks = pd.read_csv(input_fname, chunksize=1e5)
 for chunk in chunks:
     chunkCount += 1
     for i,row in chunk.iterrows():

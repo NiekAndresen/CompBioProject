@@ -1,6 +1,19 @@
 Niek Andresen for Computational Biology Project summer term 2017.
+(n.andresen@campus.tu-berlin.de)
 Code that was submitted together with the project report.
 
 - Works with python2.7 or python3
 
-takes a long time
+contains the following files:
+- removing_rows.py
+        - used to preprocess the data
+- classifier_weight_scans.py
+        - used to train and test the classifier
+        - takes a long time
+- crossval.py
+        - used for training the classifier
+- header_reduced.csv
+        - contains the columns that the preprocessing is supposed to keep
+- 1ao6A.distances
+        - contains the native distances between residues (note the index offset!)
+
