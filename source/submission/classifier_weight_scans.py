@@ -55,17 +55,8 @@ with open(distance_fname, 'r') as d:
         arr = line[:-1].split()
         dist[(int(arr[0]), int(arr[1]))] = float(arr[2])
 
-#get column names from header
-with open(header_fname, 'r') as hr:
-    header = hr.readline()[:-1] #removed \n at the end of line
-columns = []
-for key in header.split(','):
-    columns.append(key)
-#replace '_' by ' ' again
-columns = list(map(lambda string: string.replace('_',' '), columns))
-print(columns)
-
 # accumulate data about all occuring pairs of AAs in X
+print("Reading through the data")
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, chunksize=1e5)
