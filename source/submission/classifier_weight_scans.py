@@ -1,7 +1,8 @@
 ##Niek Andresen for Computational Biology Project Summer Term 2017
 
 # This script trains and tests the classifier as described in the report.
-# It requires the native distances in a file.
+# It requires the native distances in a file. Uses a .csv file as input which
+# should be created by "removing_rows.py".
 
 # GIVE PATHS:
 input_fname = "/home/nieck/HSA_data/SDA_HSA_Everything_reduced.csv"
@@ -98,7 +99,8 @@ print("training set shape:", Xtrain.shape)
 print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
 #crossvalidate and train
-classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear','rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
+classifier = SVC()
+#classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear','rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate) #crossvalidation
 
 # put everything together in one list to then predict it all
 pairs = list(X.keys())
