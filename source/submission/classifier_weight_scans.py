@@ -73,7 +73,7 @@ for key in header.split(','):
 columns = list(map(lambda string: string.replace('_',' '), columns))
 print(columns)
 
-#take a number of rows out of each experiment
+# accumulate data about all occuring pairs of AAs in X
 X = dict()
 chunkCount = 0
 chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
@@ -105,7 +105,7 @@ for chunk in chunks:
                 X[pairkey][0,-1] = dist[(aa1Idx-4, aa2Idx-4)] <= 20 #label
     print("Finished chunk number %3d."%chunkCount)
 
-#chose training set
+# chose training set
 trainingSetSize = 15000
 trainIdx = np.random.choice(np.arange(len(X)), min(trainingSetSize,len(X)))
 Xtrain = np.concatenate([ X[x] for x in [list(X.keys())[i] for i in trainIdx] ], axis=0)
@@ -117,48 +117,12 @@ print("proportion of positives in training set:", Xtrain[:,-1].mean())
 #crossvalidate and train
 classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear','rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate)
 
-#go through everything. In each scan take the ones with rank <=5 and let the classifier classify on the data stored in X about this pair.
-#take the pairs as winners that win in each scan
-chunkCount = 0
-experiments = {}
-chunks = pd.read_csv(input_fname, usecols=columns, chunksize=1e5)
-for chunk in chunks:
-    chunkCount += 1
-    for i,row in chunk.iterrows():
-        if row['MatchRank'] > 5:
-            continue
-        if row['Run'] not in experiments:
-            experiments[row['Run']] = dict()
-        aa1List, val1List, pos1List = get_neighborhood_list(row['PeptideLinkMap1'], row['Start1'])
-        aa2List, val2List, pos2List = get_neighborhood_list(row['PeptideLinkMap2'], row['Start2'])
-        for i,aa1Idx in enumerate(pos1List):
-            for j,aa2Idx in enumerate(pos2List):
-                if val1List[i] * val2List[j] < .01: #very unlikely
-                    continue
-                if not row['Scan'] in experiments[row['Run']]:
-                    experiments[row['Run']][row['Scan']] = list()
-                aa1Idx = int(aa1Idx)
-                aa2Idx = int(aa2Idx)
-                if not valid_idx_pair(aa1Idx, aa2Idx):
-                    continue
-                if aa1Idx>aa2Idx:
-                    aa1Idx,aa2Idx = aa2Idx,aa1Idx #smaller index first
-                pairkey = (aa1Idx, aa2Idx)
-                if not pairkey in experiments[row['Run']][row['Scan']]:
-                    experiments[row['Run']][row['Scan']] += [pairkey]
-    print("Finished chunk number %3d."%chunkCount)
-
 # put everything together in one list to then predict it all
-pairs = []
-for ex in experiments:
-    for scan in experiments[ex]:
-        if(len(experiments[ex][scan]) == 0):
-            continue
-        pairs += experiments[ex][scan]
-Xex = [X[pair] for pair in pairs]
-exPred = classifier.decision_function(Xex[:,:-1])
+pairs = list(X.keys())
+data = list(X.values())
+exPred = classifier.decision_function(data[:,:-1])
 # chose 1400 best winners
-nOfWinnersChosen = min(1400, len(winners))
+nOfWinnersChosen = min(1400, len(pairs))
 winners = np.argpartition(exPred, nofWinnersChosen)[-nOfWinnersChosen:]
 # list of (idx pair, prediction, label) for each of the best predictions
 winners = [(pairs[winner], exPred[winner], X[pairs[winner]][0,-1]) for winner in winners]
