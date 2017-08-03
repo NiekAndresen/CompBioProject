@@ -100,11 +100,12 @@ print("proportion of positives in training set:", Xtrain[:,-1].mean())
 
 #crossvalidate and train
 classifier = SVC()
+classifier.fit(Xtrain[:,:-1], Xtrain[:,-1])
 #classifier = xval.cv(Xtrain[:,:-1], Xtrain[:,-1], SVC, {'kernel':['linear','rbf']}, nfolds=5, nrepetitions=2, loss_function=xval.zero_one_loss)#xval.false_discovery_rate) #crossvalidation
 
 # put everything together in one list to then predict it all
 pairs = list(X.keys())
-data = list(X.values())
+data = np.concatenate([X[pair] for pair in pairs], axis=0)
 exPred = classifier.decision_function(data[:,:-1])
 # chose 1400 best winners
 nOfWinnersChosen = min(1400, len(pairs))
@@ -120,14 +121,14 @@ for winner in winners:
 
 # output
 print('classifier kerneltype:', classifier.kernel)
-print('xval loss (0-1):', classifier.cvloss)
+#print('xval loss (0-1):', classifier.cvloss)
 print("precision best winners: %f\n"%(float(correctMatchesCount)/matchesCount))
 print("len(X): %d"%len(X))
 with open(output_fname, 'w') as f:
     f.write("CLASSIFIER WEIGHT SCANS\n")
     f.write("training set shape: %d %d\n"%(Xtrain.shape[0], Xtrain.shape[1]))
     f.write("classifier type: SVM, kernel: %s\n"%(classifier.kernel))
-    f.write("cvloss: %f\n"%classifier.cvloss)
+    #f.write("cvloss: %f\n"%classifier.cvloss)
     f.write("\nmatches found: %d\n"%matchesCount)
     f.write("precision: %f\n"%(float(correctMatchesCount)/matchesCount))
 
