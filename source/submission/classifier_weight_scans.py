@@ -109,7 +109,7 @@ data = np.concatenate([X[pair] for pair in pairs], axis=0)
 exPred = classifier.decision_function(data[:,:-1])
 # chose 1400 best winners
 nOfWinnersChosen = min(1400, len(pairs))
-winners = np.argpartition(exPred, nofWinnersChosen)[-nOfWinnersChosen:]
+winners = np.argpartition(exPred, nOfWinnersChosen)[-nOfWinnersChosen:]
 # list of (idx pair, prediction, label) for each of the best predictions
 winners = [(pairs[winner], exPred[winner], X[pairs[winner]][0,-1]) for winner in winners]
 
